@@ -1,0 +1,1281 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>今天也升一級・四年級</title>
+<meta name="description" content="孩子的遊戲化學習小家教：每日任務、科目闖關、等級與經驗值。">
+<meta name="theme-color" content="#2f6f5e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!--
+  ================================================================
+  ★ 設定區（火老板 / 小火 換年級、換題目，只要改這一塊）
+  ----------------------------------------------------------------
+  tasks    今日任務：id、名稱 label、經驗值 xp
+           quiz：填科目 id 時，孩子點這個任務會直接開那一科闖關，闖完自動打勾
+                 （填 ["social","science"] 這種清單 = 其中任一科闖完就算完成）
+  storageKey 進度存檔的名字；每個孩子的檔案要不一樣，進度才不會混在一起
+  subjects 科目與題庫（每關從那一關的題目隨機抽）
+           每題 q 題目、options 選項、answer 正解是第幾個（從 0 開始數）、hint 答錯時的提示
+  titles   稱號：到了 level 幾級就換成這個稱號
+  stages   關卡：lv 第幾關、name 名稱、perRound 每關抽幾題、seconds 限時幾秒、pass 答對幾題才打開下一關
+           題目加 "lv": 2 或 3 就放進那一關；沒寫 lv 的是第 1 關
+  reward   今日獎勵：今天任務全部完成才能領，一天一次（label 名稱、minutes 計時幾分鐘、sound 要不要音樂）
+  目前程度：國小四年級上學期・期中複習｜國語、數學、社會、自然。題目由小火出，請家長先看過。
+  ================================================================
+-->
+<script type="application/json" id="config">
+{
+  "appName": "今天也升一級",
+  "storageKey": "levelup-kid-g4",
+  "defaultName": "小隊長",
+  "parentName": "爸爸",
+  "xpPerLevel": 100,
+  "xpPerCorrect": 10,
+  "note": "四年級上學期・期中複習｜國語、數學、社會、自然。每科 3 關，越後面越難、要在時間內答完。題目是小火出的，各版本課本單元順序不同，爸爸可以先看過。",
+  "titles": [
+    {"level": 1, "title": "見習冒險者"},
+    {"level": 2, "title": "勇敢的小隊員"},
+    {"level": 3, "title": "地圖解謎家"},
+    {"level": 5, "title": "知識守護者"},
+    {"level": 8, "title": "四科全能王"},
+    {"level": 12, "title": "傳說中的學習大師"}
+  ],
+  "tasks": [
+    {"id": "math", "label": "完成一次數學闖關", "xp": 20, "quiz": "math"},
+    {"id": "zh", "label": "完成一次國語闖關", "xp": 15, "quiz": "chinese"},
+    {"id": "socsci", "label": "社會或自然選一科闖關", "xp": 15, "quiz": ["social", "science"]}
+  ],
+  "reward": {"label": "玩遊戲 10 分鐘", "icon": "🎮", "minutes": 10, "sound": true},
+  "stages": [
+    {"lv": 1, "name": "熱身關", "perRound": 10, "seconds": 180, "pass": 8},
+    {"lv": 2, "name": "進階關", "perRound": 10, "seconds": 240, "pass": 8},
+    {"lv": 3, "name": "挑戰關", "perRound": 10, "seconds": 300, "pass": 8}
+  ],
+  "subjects": [
+    {
+      "id": "chinese", "name": "國語", "icon": "語", "color": "#d1495b",
+      "questions": [
+        {"q": "「畫蛇添足」是什麼意思？", "options": ["畫圖畫得很漂亮", "做了多餘的事，反而把事情弄壞", "做事很有耐心", "動作非常快"], "answer": 1, "hint": "蛇本來沒有腳，畫了腳反而不像蛇，比賽就輸了。"},
+        {"q": "哪個成語和「一石二鳥」的意思最接近？", "options": ["一舉兩得", "一心一意", "三心二意", "一刀兩斷"], "answer": 0, "hint": "做一件事得到兩個好處，就是一舉兩得。"},
+        {"q": "「彎彎的月亮像一艘小船。」這句用了什麼修辭？", "options": ["擬人", "誇飾", "譬喻", "排比"], "answer": 2, "hint": "用「像」把月亮比成小船，是譬喻。"},
+        {"q": "「花兒在風中開心地跳舞。」這句用了什麼修辭？", "options": ["譬喻", "擬人", "誇飾", "設問"], "answer": 1, "hint": "花不會真的跳舞，把花寫得像人一樣，是擬人。"},
+        {"q": "「他的聲音大到屋頂都快被掀開了。」這句用了什麼修辭？", "options": ["誇飾", "譬喻", "擬人", "對比"], "answer": 0, "hint": "故意說得比真實情況更誇張，是誇飾。"},
+        {"q": "「同學們正在進行（　）論比賽。」括號裡填哪個字？", "options": ["辨", "辮", "辯", "瓣"], "answer": 2, "hint": "用嘴巴說道理的「辯」，中間是「言」。"},
+        {"q": "「我（　）家門口等你。」括號裡填哪個字？", "options": ["再", "在", "載", "才"], "answer": 1, "hint": "表示位置、地點用「在」；「再」是又一次。"},
+        {"q": "「照」這個字的部首是什麼？", "options": ["日", "口", "火（灬）", "刀"], "answer": 2, "hint": "下面四個點「灬」是火的變形，部首是火。"},
+        {"q": "「謙虛」的相反詞是哪一個？", "options": ["客氣", "驕傲", "誠實", "害羞"], "answer": 1, "hint": "謙虛是不自誇，相反就是驕傲。"},
+        {"q": "「迫不及待」是什麼意思？", "options": ["急得不能再等", "慢慢地等", "不想參加", "害怕遲到"], "answer": 0, "hint": "「迫」是急迫，急到等不及了。"},
+        {"q": "「一（　）橋」括號裡填哪個量詞最適合？", "options": ["條", "座", "棟", "片"], "answer": 1, "hint": "橋和山一樣，常用「座」。"},
+        {"q": "下面哪一個是書名號？", "options": ["「　」", "（　）", "《　》", "、"], "answer": 2, "hint": "書名、篇名用書名號《　》（也可以用波浪線﹏）。"},
+
+        {"lv": 2, "q": "「守株待兔」比喻什麼？", "options": ["跑得像兔子一樣快", "很有耐心照顧動物", "不知變通，只想等好運", "每天勤勞種田"], "answer": 2, "hint": "農夫看到兔子撞死在樹下，就天天守著樹等，田都荒廢了。"},
+        {"lv": 2, "q": "「亡羊補牢」是什麼意思？", "options": ["把羊關在牢裡", "出錯後趕快補救，還來得及", "做事拖拖拉拉", "羊跑掉就不要了"], "answer": 1, "hint": "羊跑了趕快修好羊圈，剩下的羊就不會再跑掉。"},
+        {"lv": 2, "q": "「我愛春天的花，我愛夏天的海，我愛秋天的月。」用了什麼修辭？", "options": ["譬喻", "排比", "誇飾", "擬人"], "answer": 1, "hint": "三個句子長得很像、一句接一句排下來，是排比。"},
+        {"lv": 2, "q": "「為什麼樹葉會變黃呢？原來是天氣變冷了。」用了什麼修辭？", "options": ["譬喻", "擬人", "誇飾", "設問"], "answer": 3, "hint": "自己先問一個問題，再自己回答，是設問。"},
+        {"lv": 2, "q": "「他做事很（　）真，從不馬虎。」括號裡填哪個字？", "options": ["紉", "刃", "認", "忍"], "answer": 2, "hint": "認真的「認」是言字旁；「忍」是忍耐。"},
+        {"lv": 2, "q": "「這裡的風（　）很美，我們拍了很多照片。」括號裡填哪個字？", "options": ["京", "影", "景", "鯨"], "answer": 2, "hint": "風景的「景」上面有「日」；「影」是影子。"},
+        {"lv": 2, "q": "「老師（　）勵我們多讀書。」括號裡填哪個字？", "options": ["姑", "股", "鼓", "故"], "answer": 2, "hint": "鼓勵的「鼓」，就是打鼓的鼓，幫你加油打氣。"},
+        {"lv": 2, "q": "「問」這個字的部首是什麼？", "options": ["日", "口", "門", "戶"], "answer": 1, "hint": "問問題要用嘴巴，部首是「口」，不是外面的「門」。"},
+        {"lv": 2, "q": "「聞」這個字的部首是什麼？", "options": ["目", "門", "口", "耳"], "answer": 3, "hint": "聽到消息要用耳朵，「聞」的部首是「耳」。"},
+        {"lv": 2, "q": "「老師說（　）『明天要考試。』」括號裡要填哪個標點？", "options": ["！", "。", "；", "："], "answer": 3, "hint": "「說」後面接著說的話，要先用冒號「：」，再加引號。"},
+        {"lv": 2, "q": "「勤勞」的相反詞是哪一個？", "options": ["懶惰", "努力", "認真", "辛苦"], "answer": 0, "hint": "勤勞是很肯做事，相反就是懶惰。"},
+        {"lv": 2, "q": "「胸有成竹」是什麼意思？", "options": ["很喜歡竹子", "做事前已經很有把握", "胸口很痛", "做事很慌張"], "answer": 1, "hint": "畫竹子的人心裡早就想好竹子的樣子，比喻很有把握。"},
+
+        {"lv": 3, "q": "「半途而廢」用在哪一句最恰當？", "options": ["這碗湯半途而廢，非常好喝。", "天氣半途而廢，忽然下雨了。", "他學鋼琴一個月就放棄，真是半途而廢。", "他天天練琴，半途而廢得到冠軍。"], "answer": 2, "hint": "半途而廢是事情做到一半就放棄，用來說人做事。"},
+        {"lv": 3, "q": "「對牛彈琴」比喻什麼？", "options": ["音樂可以讓牛長大", "對不懂的人講道理，白費力氣", "在鄉下開音樂會", "很會照顧動物"], "answer": 1, "hint": "牛聽不懂琴聲，比喻說的話對方聽不懂。"},
+        {"lv": 3, "q": "「井底之蛙」比喻什麼樣的人？", "options": ["見識很少的人", "很會游泳的人", "住在井邊的人", "很勇敢的人"], "answer": 0, "hint": "青蛙在井底只看到井口那麼大的天，比喻見識少。"},
+        {"lv": 3, "q": "哪一句用了「擬人」修辭？", "options": ["她的眼睛像星星一樣亮。", "太陽公公笑瞇瞇地看著大地。", "天空藍藍的，很漂亮。", "我等了一百年你才來。"], "answer": 1, "hint": "太陽不會笑，把太陽寫得像人一樣，是擬人；「像星星」是譬喻。"},
+        {"lv": 3, "q": "哪一句用了「誇飾」修辭？", "options": ["我喜歡吃蘋果。", "風輕輕地唱著歌。", "他餓得可以吞下一頭牛。", "小貓像毛球一樣圓。"], "answer": 2, "hint": "沒有人吞得下一頭牛，故意說得很誇張，是誇飾。"},
+        {"lv": 3, "q": "下面哪一個詞語寫錯了？", "options": ["再接再勵", "迫不及待", "畫蛇添足", "一舉兩得"], "answer": 0, "hint": "正確是「再接再厲」，「厲」有更加努力的意思。"},
+        {"lv": 3, "q": "下面哪一個詞語寫錯了？", "options": ["守株待兔", "一股作氣", "對牛彈琴", "亡羊補牢"], "answer": 1, "hint": "正確是「一鼓作氣」，打仗時第一次打鼓，士兵最有勇氣。"},
+        {"lv": 3, "q": "「相」這個字的部首是什麼？", "options": ["十", "八", "木", "目"], "answer": 3, "hint": "「相」是用眼睛看，部首是右邊的「目」。"},
+        {"lv": 3, "q": "「到」這個字的部首是什麼？", "options": ["刀（刂）", "至", "一", "土"], "answer": 0, "hint": "右邊的「刂」叫立刀旁，是「到」的部首。"},
+        {"lv": 3, "q": "「功」這個字的部首是什麼？", "options": ["口", "力", "刀", "工"], "answer": 1, "hint": "做事要出力才有功勞，部首是「力」。"},
+        {"lv": 3, "q": "哪一句的標點用得正確？", "options": ["老師說「明天要帶彩色筆。」：", "老師說：《明天要帶彩色筆。》", "老師說：「明天要帶彩色筆。」", "老師說，「明天要帶彩色筆」？"], "answer": 2, "hint": "說的話前面用冒號，說的話用引號「　」包起來；《　》是書名號。"},
+        {"lv": 3, "q": "「小明一進門就把書包丟在地上，大聲說：『我再也不要跟他玩了！』」小明心裡覺得怎樣？", "options": ["很生氣", "很開心", "很感動", "很害怕"], "answer": 0, "hint": "丟書包、大聲說再也不要玩，表示他在生氣。"},
+        {"lv": 3, "q": "「雖然下著大雨，（　）」接哪一句最通順？", "options": ["而且太陽很大。", "所以他沒有帶傘。", "因為他很早起床。", "他還是準時到學校。"], "answer": 3, "hint": "「雖然…還是…」：前後意思相反，下大雨還是準時到。"}
+      ]
+    },
+    {
+      "id": "math", "name": "數學", "icon": "數", "color": "#2f6f5e",
+      "questions": [
+        {"q": "「三億零五百萬」寫成數字是哪一個？", "options": ["30500000", "305000000", "300500000", "3050000000"], "answer": 1, "hint": "3 億 = 300000000，再加 5 百萬 = 5000000，合起來 305000000。"},
+        {"q": "47000000 中的「7」在哪一位？", "options": ["百萬位", "千萬位", "億位", "十萬位"], "answer": 0, "hint": "從右邊數：個、十、百、千、萬、十萬、百萬、千萬。4 在千萬位，7 在百萬位。"},
+        {"q": "5 個一千萬是多少？", "options": ["5 百萬", "5 千萬", "5 億", "50 億"], "answer": 1, "hint": "1 個一千萬是 1 千萬，5 個就是 5 千萬。"},
+        {"q": "一條直線（平角）是幾度？", "options": ["90 度", "180 度", "270 度", "360 度"], "answer": 1, "hint": "平角是 2 個直角，90 + 90 = 180 度。"},
+        {"q": "旋轉一整圈是幾度？", "options": ["180 度", "270 度", "360 度", "100 度"], "answer": 2, "hint": "一圈是 4 個直角，90 × 4 = 360 度。"},
+        {"q": "比直角小的角叫做什麼角？", "options": ["銳角", "鈍角", "平角", "周角"], "answer": 0, "hint": "銳角是「尖尖的」角，小於 90 度。"},
+        {"q": "三條邊一樣長的三角形叫做什麼？", "options": ["直角三角形", "等腰三角形", "正三角形", "鈍角三角形"], "answer": 2, "hint": "三邊都相等是正三角形；只有兩邊相等是等腰三角形。"},
+        {"q": "時鐘 3 點整，時針和分針夾成幾度？", "options": ["30 度", "60 度", "90 度", "180 度"], "answer": 2, "hint": "分針指 12、時針指 3，剛好是一個直角。"},
+        {"q": "1 億是幾個 1 千萬？", "options": ["10 個", "100 個", "1 個", "1000 個"], "answer": 0, "hint": "1 千萬 × 10 = 1 億，就像 10 個一千是一萬。"},
+        {"q": "60000000 怎麼讀？", "options": ["六十萬", "六百萬", "六億", "六千萬"], "answer": 3, "hint": "從右邊數 8 位是千萬位，6 在千萬位，就是六千萬。"},
+        {"q": "比 90 度大、比 180 度小的角叫做什麼角？", "options": ["直角", "銳角", "平角", "鈍角"], "answer": 3, "hint": "鈍角是「開得比較大」的角，在 90 度和 180 度中間。"},
+        {"q": "300 × 20 = ？", "options": ["600", "60000", "6000", "3200"], "answer": 2, "hint": "先算 3 × 2 = 6，再把 300 和 20 的 0 一共 3 個補在後面：6000。"},
+        {"q": "840 ÷ 4 = ？", "options": ["201", "2100", "210", "21"], "answer": 2, "hint": "8 ÷ 4 = 2，4 ÷ 4 = 1，0 ÷ 4 = 0，所以是 210。"},
+        {"q": "有一個角是直角的三角形叫做什麼？", "options": ["鈍角三角形", "銳角三角形", "直角三角形", "正三角形"], "answer": 2, "hint": "有一個 90 度的直角，就是直角三角形。"},
+
+        {"q": "236 × 24 = ？", "options": ["5564", "5664", "4664", "5764"], "answer": 1, "hint": "236 × 20 = 4720，236 × 4 = 944，加起來 5664。", "lv": 2},
+        {"q": "408 × 35 = ？", "options": ["14280", "14080", "12280", "14380"], "answer": 0, "hint": "408 × 30 = 12240，408 × 5 = 2040，加起來 14280。", "lv": 2},
+        {"q": "864 ÷ 24 = ？", "options": ["34", "36", "38", "26"], "answer": 1, "hint": "先估 24 × 30 = 720，還剩 144，144 ÷ 24 = 6，所以是 36。", "lv": 2},
+        {"q": "500 ÷ 23 = ？", "options": ["21 餘 7", "21 餘 17", "22 餘 6", "20 餘 40"], "answer": 1, "hint": "23 × 21 = 483，500 − 483 = 17。餘數一定要比 23 小喔。", "lv": 2},
+        {"q": "一箱有 24 瓶水，買 15 箱，一共有幾瓶？", "options": ["340", "360", "380", "39"], "answer": 1, "hint": "24 × 15 = 24 × 10 + 24 × 5 = 240 + 120 = 360。", "lv": 2},
+        {"lv": 2, "q": "28305000 怎麼讀？", "options": ["二千八百三十五萬", "二億八千三百零五萬", "二百八十三萬五千", "二千八百三十萬五千"], "answer": 3, "hint": "先把後面四位切開：2830｜5000，讀成二千八百三十萬五千。"},
+        {"lv": 2, "q": "3 個 1 億和 4 個 10 萬合起來是多少？", "options": ["304000000", "300040000", "300400000", "34000000"], "answer": 2, "hint": "3 億 = 300000000，4 個 10 萬 = 400000，加起來 300400000。"},
+        {"lv": 2, "q": "352 × 46 = ？", "options": ["15192", "17192", "16182", "16192"], "answer": 3, "hint": "352 × 40 = 14080，352 × 6 = 2112，加起來 16192。"},
+        {"lv": 2, "q": "756 ÷ 18 = ？", "options": ["32", "42", "43", "41"], "answer": 1, "hint": "先估 18 × 40 = 720，還剩 36，36 ÷ 18 = 2，所以是 42。"},
+        {"lv": 2, "q": "等腰三角形至少有幾條邊一樣長？", "options": ["4 條", "1 條", "2 條", "3 條"], "answer": 2, "hint": "「等腰」就是兩個腰一樣長，所以至少 2 條邊一樣長。"},
+        {"lv": 2, "q": "2 個直角再加 30 度，是幾度？", "options": ["210 度", "180 度", "120 度", "300 度"], "answer": 0, "hint": "1 個直角 90 度，2 個是 180 度，再加 30 度 = 210 度。"},
+        {"lv": 2, "q": "一張桌子 1250 元，學校買 24 張，要付多少元？", "options": ["25000 元", "3000 元", "30500 元", "30000 元"], "answer": 3, "hint": "1250 × 24 = 1250 × 20 + 1250 × 4 = 25000 + 5000 = 30000。"},
+
+        {"q": "媽媽帶 1000 元，買 3 本書，每本 245 元，還剩多少元？", "options": ["255", "265", "275", "365"], "answer": 1, "hint": "245 × 3 = 735，1000 − 735 = 265。", "lv": 3},
+        {"lv": 3, "q": "一臺機器每天做 365 個玩具，做 28 天，一共做了幾個？", "options": ["9220 個", "10120 個", "10220 個", "10950 個"], "answer": 2, "hint": "365 × 28 = 365 × 20 + 365 × 8 = 7300 + 2920 = 10220。"},
+        {"lv": 3, "q": "有 925 位學生，一輛車坐 38 人，最少要幾輛車才坐得下？", "options": ["26 輛", "23 輛", "25 輛", "24 輛"], "answer": 2, "hint": "925 ÷ 38 = 24 餘 13，剩下的 13 人也要坐車，所以要 25 輛。"},
+        {"lv": 3, "q": "有 650 顆糖，每盒裝 24 顆，可以裝滿幾盒、剩幾顆？", "options": ["28 盒，剩 2 顆", "27 盒，剩 12 顆", "26 盒，剩 26 顆", "27 盒，剩 2 顆"], "answer": 3, "hint": "24 × 27 = 648，650 − 648 = 2。剩的不能比 24 多喔。"},
+        {"lv": 3, "q": "□ ÷ 25 = 16 餘 7，□ 是多少？", "options": ["407", "4007", "393", "400"], "answer": 0, "hint": "被除數 = 除數 × 商 + 餘數 = 25 × 16 + 7 = 407。"},
+        {"lv": 3, "q": "一個數乘以 32 等於 7680，這個數是多少？", "options": ["24", "2400", "240", "204"], "answer": 2, "hint": "反過來用除法：7680 ÷ 32 = 240。"},
+        {"lv": 3, "q": "甲市有 2345 萬人，比乙市多 380 萬人，乙市有多少萬人？", "options": ["2065 萬人", "1965 萬人", "2725 萬人", "1975 萬人"], "answer": 1, "hint": "乙市比較少，用減的：2345 − 380 = 1965。"},
+        {"lv": 3, "q": "一個角比一整圈少 45 度，這個角是幾度？", "options": ["135 度", "315 度", "325 度", "405 度"], "answer": 1, "hint": "一整圈 360 度，360 − 45 = 315 度。"},
+        {"lv": 3, "q": "時鐘的時針從 12 走到 4，轉了幾度？", "options": ["150 度", "120 度", "90 度", "40 度"], "answer": 1, "hint": "時針走一大格是 30 度（360 ÷ 12），4 格就是 120 度。"},
+        {"lv": 3, "q": "三角形的三個角是 30 度、60 度、90 度，它是什麼三角形？", "options": ["銳角三角形", "鈍角三角形", "正三角形", "直角三角形"], "answer": 3, "hint": "有一個角是 90 度，就是直角三角形。"},
+        {"lv": 3, "q": "有一個角是 120 度的三角形，是什麼三角形？", "options": ["銳角三角形", "鈍角三角形", "正三角形", "直角三角形"], "answer": 1, "hint": "120 度比 90 度大，是鈍角，所以是鈍角三角形。"},
+        {"lv": 3, "q": "等腰三角形的兩腰各 8 公分，底邊 5 公分，三邊加起來多長？", "options": ["21 公分", "13 公分", "24 公分", "18 公分"], "answer": 0, "hint": "兩腰一樣長：8 + 8 + 5 = 21 公分。"},
+        {"lv": 3, "q": "406 × 50 − 1000 = ？", "options": ["20300", "2030", "19300", "19000"], "answer": 2, "hint": "先乘：406 × 50 = 20300，再減：20300 − 1000 = 19300。"}
+      ]
+    },
+    {
+      "id": "social", "name": "社會", "icon": "社", "color": "#b5651d",
+      "questions": [
+        {"q": "地圖上用來說明「每個符號代表什麼」的是什麼？", "options": ["圖例", "比例尺", "方位", "圖名"], "answer": 0, "hint": "圖例就像地圖的小字典，告訴你符號的意思。"},
+        {"q": "地圖上沒有畫方位標示時，上方通常是哪一方？", "options": ["東", "西", "南", "北"], "answer": 3, "hint": "一般地圖是「上北下南、左西右東」。"},
+        {"q": "北方和東方的中間，是哪一個方位？", "options": ["西北", "東北", "東南", "西南"], "answer": 1, "hint": "北和東合起來，就是東北。"},
+        {"q": "想知道地圖上兩地的實際距離，要看地圖上的什麼？", "options": ["圖例", "圖名", "比例尺", "顏色"], "answer": 2, "hint": "比例尺告訴你地圖縮小了多少倍。"},
+        {"q": "四周比較高、中間比較低的地形叫做什麼？", "options": ["平原", "盆地", "台地", "丘陵"], "answer": 1, "hint": "像一個洗臉盆，中間低四周高，就是盆地。"},
+        {"q": "地勢平坦、高度低，適合種稻和蓋房子的地形是？", "options": ["山地", "丘陵", "平原", "盆地"], "answer": 2, "hint": "平平坦坦的大片土地是平原。"},
+        {"q": "臺灣面積最大的縣是哪一個？", "options": ["臺東縣", "南投縣", "花蓮縣", "屏東縣"], "answer": 2, "hint": "就是爸爸的民宿所在的花蓮縣！"},
+        {"q": "要辦出生登記、申請身分證，要去哪裡？", "options": ["警察局", "戶政事務所", "衛生所", "郵局"], "answer": 1, "hint": "跟「戶口」有關的事，去戶政事務所。"},
+        {"q": "村長、里長是怎麼產生的？", "options": ["老師指定", "由居民投票選出", "抽籤", "總統任命"], "answer": 1, "hint": "村長、里長是村里的居民一起投票選出來的。"},
+        {"q": "家附近的路燈壞了，可以先找誰反映？", "options": ["里長或村長", "學校校長", "便利商店店員", "消防隊"], "answer": 0, "hint": "里長、村長負責幫忙處理村里的公共事務。"},
+        {"q": "地圖上的藍色，通常代表什麼？", "options": ["高山", "道路", "森林", "河流、湖泊或海"], "answer": 3, "hint": "水的顏色是藍色，地圖上河流、湖泊、海洋常畫成藍色。"},
+        {"q": "地圖上的方位標（指北針），箭頭通常指向哪一方？", "options": ["西", "南", "北", "東"], "answer": 2, "hint": "方位標的箭頭和「N」都是指向北方。"},
+        {"q": "很高、坡度很陡的地形叫做什麼？", "options": ["盆地", "山地", "台地", "平原"], "answer": 1, "hint": "又高又陡的地方是山地，像中央山脈。"},
+        {"q": "鄉、鎮、市公所的首長叫做什麼？", "options": ["鄉長、鎮長、市長", "縣長", "村長、里長", "議員"], "answer": 0, "hint": "鄉公所的首長是鄉長，鎮公所是鎮長，市公所是市長。"},
+
+        {"q": "比例尺 1:1000，地圖上 1 公分代表實際的多少？", "options": ["1 公尺", "10 公尺", "100 公尺", "1 公里"], "answer": 1, "hint": "1 公分 × 1000 = 1000 公分 = 10 公尺。", "lv": 2},
+        {"q": "臺灣冬天主要吹哪一種季風？", "options": ["西南季風", "東北季風", "東南季風", "西北季風"], "answer": 1, "hint": "冬天從北方吹來又冷又濕的東北季風。", "lv": 2},
+        {"lv": 2, "q": "地勢比較高、上面平坦、四周是陡坡的地形叫做什麼？", "options": ["平原", "台地", "盆地", "丘陵"], "answer": 1, "hint": "台地像一張高高的桌子，桌面平平的，四周是陡坡。"},
+        {"lv": 2, "q": "高度不高、起伏和緩，像很多小山丘的地形是什麼？", "options": ["丘陵", "山地", "台地", "平原"], "answer": 0, "hint": "一個個小山丘連在一起，就是丘陵。"},
+        {"lv": 2, "q": "花蓮的花東縱谷，在哪兩座山脈中間？", "options": ["雪山山脈和玉山山脈", "海岸山脈和雪山山脈", "阿里山山脈和中央山脈", "中央山脈和海岸山脈"], "answer": 3, "hint": "花東縱谷西邊是中央山脈，東邊是靠海的海岸山脈。"},
+        {"lv": 2, "q": "臺灣最高的山是哪一座？", "options": ["合歡山", "玉山", "陽明山", "阿里山"], "answer": 1, "hint": "玉山將近 4000 公尺，是臺灣最高的山。"},
+        {"lv": 2, "q": "縣長、市長是怎麼產生的？", "options": ["由縣民、市民投票選出", "由村長輪流當", "由老師推薦", "由總統指定"], "answer": 0, "hint": "地方自治：縣市長由當地居民投票選出來。"},
+        {"lv": 2, "q": "縣議會、市議會的議員，主要工作是什麼？", "options": ["預報天氣", "代表民眾監督縣市政府", "指揮學校上課", "在路上開罰單"], "answer": 1, "hint": "議員是民眾選出來的代表，負責監督縣市政府做事、審查預算。"},
+        {"lv": 2, "q": "「地方自治」是什麼意思？", "options": ["全部的事都由總統決定", "每個人只管自己家的事", "地方的事交給外國人管", "地方的居民選出代表，一起管理地方的事"], "answer": 3, "hint": "自己家鄉的事，由居民選出的人來管理，就是地方自治。"},
+        {"lv": 2, "q": "學校在家的北邊，那麼家在學校的哪一邊？", "options": ["西邊", "東邊", "北邊", "南邊"], "answer": 3, "hint": "北的相反是南；學校在家北邊，家就在學校南邊。"},
+        {"lv": 2, "q": "比例尺 1:10000，地圖上 2 公分代表實際的多少？", "options": ["2000 公尺", "20 公尺", "2 公里", "200 公尺"], "answer": 3, "hint": "2 公分 × 10000 = 20000 公分 = 200 公尺。"},
+        {"lv": 2, "q": "垃圾清運、環境清潔，主要是哪個單位負責？", "options": ["郵局", "鄉鎮市公所的清潔隊", "地政事務所", "戶政事務所"], "answer": 1, "hint": "清潔隊是鄉鎮市公所負責的，幫忙收垃圾、打掃環境。"},
+        {"lv": 2, "q": "想知道家鄉以前的樣子，哪個方法最適合？", "options": ["猜猜看", "問外國的朋友", "看卡通", "訪問家裡的長輩、看老照片"], "answer": 3, "hint": "長輩住得久，老照片也記錄了以前的樣子。"},
+
+        {"lv": 3, "q": "臺灣的東邊是什麼海洋？", "options": ["大西洋", "印度洋", "北冰洋", "太平洋"], "answer": 3, "hint": "臺灣東邊面對的是全世界最大的太平洋，花蓮就在東邊海岸。"},
+        {"lv": 3, "q": "早上面向太陽站著，你的右手邊是哪一方？", "options": ["東", "南", "西", "北"], "answer": 1, "hint": "早上太陽在東邊。面向東，右手是南、左手是北、背後是西。"},
+        {"lv": 3, "q": "同一個公園，畫在比例尺 1:1000 和 1:100000 的地圖上，哪一張畫得比較大、比較詳細？", "options": ["一樣大", "不一定", "1:1000", "1:100000"], "answer": 2, "hint": "1:1000 只縮小 1000 倍，1:100000 縮小 100000 倍，縮得少的畫得比較大。"},
+        {"lv": 3, "q": "花蓮、臺東的平原比較少，主要原因是什麼？", "options": ["雨下得太少", "土地都蓋房子了", "人口太多", "山地多，山脈離海很近"], "answer": 3, "hint": "東部有中央山脈和海岸山脈，山很靠近海，平地就少。"},
+        {"lv": 3, "q": "盆地的夏天常常很悶熱，主要原因是什麼？", "options": ["太陽比較近", "樹木太多", "四周有山擋住，風吹不進來、熱氣散不掉", "離海太近"], "answer": 2, "hint": "盆地四周高、中間低，像蓋著蓋子，熱氣不容易散出去。"},
+        {"lv": 3, "q": "地名裡有「埔」或「坪」，通常和什麼樣的地形有關？", "options": ["很高的山", "平坦的土地", "很深的海", "大河的源頭"], "answer": 1, "hint": "「埔」「坪」都是平坦的地，例如大坪頂、新埔。"},
+        {"lv": 3, "q": "地名叫「〇〇港」，通常表示那裡以前怎麼樣？", "options": ["靠近海或河，有船停靠", "種了很多樹", "以前是沙漠", "有很多高山"], "answer": 0, "hint": "港就是船停靠的地方，表示靠近海或河。"},
+        {"lv": 3, "q": "里民對社區的事有意見，可以參加什麼會議表達？", "options": ["畢業典禮", "家長會", "里民大會", "班會"], "answer": 2, "hint": "里民大會讓里民一起討論社區的事。"},
+        {"lv": 3, "q": "縣市長負責執行政策，那「監督」縣市政府的是誰？", "options": ["縣市議會", "便利商店", "戶政事務所", "學校"], "answer": 0, "hint": "議會是民意機關，負責監督縣市政府。"},
+        {"lv": 3, "q": "鄉鎮市民代表會的代表，是怎麼產生的？", "options": ["由鄉鎮市民投票選出", "由縣長指定", "抽籤決定", "由校長指定"], "answer": 0, "hint": "代表會的代表，也是居民投票選出來的。"},
+        {"lv": 3, "q": "下面哪一件事，主要由「地方」政府處理？", "options": ["指揮國家軍隊", "和外國簽條約", "修家鄉的道路和公園", "印新臺幣"], "answer": 2, "hint": "家鄉的道路、公園、垃圾，是地方政府的工作；外交、國防是中央的事。"},
+        {"lv": 3, "q": "地圖上 1 公分代表實際 1 公里，兩地在地圖上相距 7 公分，實際距離是多少？", "options": ["70 公尺", "700 公尺", "70 公里", "7 公里"], "answer": 3, "hint": "1 公分代表 1 公里，7 公分就是 7 公里。"},
+        {"lv": 3, "q": "冬天東北季風吹到臺灣北部和東北部，天氣常常怎樣？", "options": ["颳颱風", "下雨、濕濕冷冷", "又乾又熱", "一直出大太陽"], "answer": 1, "hint": "東北季風經過海面帶來水氣，碰到山就下雨，北部和東北部冬天常濕冷。"}
+      ]
+    },
+    {
+      "id": "science", "name": "自然", "icon": "自", "color": "#3d5a98",
+      "questions": [
+        {"q": "月亮為什麼看起來是亮的？", "options": ["月亮自己會發光", "反射太陽的光", "反射地球的燈光", "月亮上有火山"], "answer": 1, "hint": "月亮自己不會發光，是太陽照到它，光反射到我們眼睛。"},
+        {"q": "農曆十五左右，通常會看到什麼樣的月亮？", "options": ["新月", "上弦月", "滿月", "下弦月"], "answer": 2, "hint": "中秋節是農曆八月十五，月亮又大又圓。"},
+        {"q": "月亮在天空中移動的方向是？", "options": ["西升東落", "東升西落", "南升北落", "不會移動"], "answer": 1, "hint": "和太陽一樣，從東邊升起、西邊落下。"},
+        {"q": "布袋蓮為什麼能浮在水面上？", "options": ["根很長", "膨大的葉柄裡有空氣", "葉子很硬", "會游泳"], "answer": 1, "hint": "捏捏看布袋蓮的葉柄，裡面像海綿一樣有很多空氣。"},
+        {"q": "荷花屬於哪一類水生植物？", "options": ["沉水植物", "漂浮植物", "挺水植物", "陸生植物"], "answer": 2, "hint": "根長在泥土裡，莖和葉挺出水面，叫挺水植物。"},
+        {"q": "金魚藻整株都在水面下生長，它是哪一類？", "options": ["沉水植物", "挺水植物", "浮葉植物", "漂浮植物"], "answer": 0, "hint": "整株沉在水裡的是沉水植物。"},
+        {"q": "魚在水中用什麼呼吸？", "options": ["肺", "鰓", "皮膚", "鰭"], "answer": 1, "hint": "魚用頭兩側的鰓吸取水中的氧氣。"},
+        {"q": "衛生紙一角碰到水，水會慢慢往上爬，這叫做什麼現象？", "options": ["虹吸現象", "毛細現象", "蒸發", "凝結"], "answer": 1, "hint": "水沿著細細的縫隙往上移動，叫毛細現象。"},
+        {"q": "連通管裝水，水靜止後，各管的水面會怎樣？", "options": ["粗的管比較高", "細的管比較高", "一樣高", "會一直流動"], "answer": 2, "hint": "連在一起的管子，水靜止後水面會一樣高。"},
+        {"q": "把哪一個接進電路裡，燈泡會亮？", "options": ["橡皮擦", "塑膠尺", "鐵製迴紋針", "木頭筷子"], "answer": 2, "hint": "金屬容易導電，是導體；橡皮擦、塑膠、木頭不導電。"},
+        {"q": "農曆初一左右，幾乎看不到月亮，這時的月相叫做什麼？", "options": ["滿月", "新月", "上弦月", "下弦月"], "answer": 1, "hint": "農曆初一是新月，月亮亮的那面背對我們，所以看不到。"},
+        {"q": "睡蓮的葉子平平地浮在水面，根長在水底泥土裡，它是哪一類？", "options": ["挺水植物", "沉水植物", "浮葉植物", "漂浮植物"], "answer": 2, "hint": "葉子浮在水面、根抓在泥土裡，是浮葉植物。"},
+        {"q": "下面哪一個是導體（會導電）？", "options": ["塑膠湯匙", "紙卡", "玻璃杯", "10 元硬幣"], "answer": 3, "hint": "硬幣是金屬做的，金屬容易導電。"},
+
+        {"q": "月亮每天升起的時間，大約會怎麼變？", "options": ["每天都一樣", "比前一天早約 50 分鐘", "比前一天晚約 50 分鐘", "比前一天晚約 5 小時"], "answer": 2, "hint": "月亮每天大約晚 50 分鐘升起，所以月相會慢慢改變。", "lv": 2},
+        {"q": "用水管把魚缸裡的水吸出來換水，是利用什麼？", "options": ["毛細現象", "虹吸現象", "熱脹冷縮", "磁力"], "answer": 1, "hint": "出水口要比魚缸水面低，水才會一直流出來，這是虹吸現象。", "lv": 2},
+        {"lv": 2, "q": "在臺灣看上弦月，亮的是哪一邊？", "options": ["上面", "右邊", "左邊", "全部都亮"], "answer": 1, "hint": "上弦月在農曆初七、初八左右，亮的是右半邊（西邊）。"},
+        {"lv": 2, "q": "下弦月大約出現在農曆什麼時候？", "options": ["初七、初八", "二十二、二十三", "十五", "初一"], "answer": 1, "hint": "新月初一 → 上弦初七八 → 滿月十五 → 下弦二十二、二十三。"},
+        {"lv": 2, "q": "從新月變到下一次新月，大約要多久？", "options": ["約 365 天", "約 15 天", "約 29.5 天（大約一個月）", "約 7 天"], "answer": 2, "hint": "月相變化一輪大約 29.5 天，所以農曆一個月大約 29 或 30 天。"},
+        {"lv": 2, "q": "滿月的時候，月亮大約什麼時候從東方升起？", "options": ["傍晚，太陽下山的時候", "中午", "清晨，太陽出來的時候", "半夜三點"], "answer": 0, "hint": "滿月和太陽在相反方向，太陽從西邊下山時，滿月從東邊升起。"},
+        {"lv": 2, "q": "浮萍是哪一類水生植物？", "options": ["浮葉植物", "挺水植物", "沉水植物", "漂浮植物"], "answer": 3, "hint": "浮萍整株漂在水面，根沒有抓住泥土，是漂浮植物。"},
+        {"lv": 2, "q": "金魚藻、水蘊草的莖和葉很柔軟，有什麼好處？", "options": ["水流動時不容易被折斷", "比較好吃", "可以開很多花", "可以長得很高"], "answer": 0, "hint": "軟軟的莖葉會跟著水流擺動，就不容易被沖斷。"},
+        {"lv": 2, "q": "荷葉上的水珠會滾來滾去，不會把葉子弄濕，為什麼？", "options": ["水珠是冰做的", "荷葉會發熱", "葉面有細毛和蠟質，不容易沾水", "荷葉會吸水"], "answer": 2, "hint": "荷葉表面有很多細細的突起和蠟，水不容易沾上去。"},
+        {"lv": 2, "q": "布袋蓮長得太多，會造成什麼問題？", "options": ["沒有任何影響", "讓魚長得更快", "讓水變得更乾淨", "蓋滿水面，讓水裡生物缺氧、水道堵塞"], "answer": 3, "hint": "布袋蓮繁殖很快，蓋住水面，陽光和空氣進不去，水道也會塞住。"},
+        {"lv": 2, "q": "下面哪一件事是利用「毛細現象」？", "options": ["用吸管喝飲料", "水從高處往低處流", "冰塊融化成水", "用抹布吸乾桌上的水"], "answer": 3, "hint": "抹布裡有很多細縫，水會沿著細縫被吸上去，這是毛細現象。"},
+        {"lv": 2, "q": "茶壺的壺嘴和壺身裝了水，水面會一樣高，這是利用什麼原理？", "options": ["熱脹冷縮", "連通管原理", "虹吸現象", "毛細現象"], "answer": 1, "hint": "壺嘴和壺身底下是連在一起的，就像連通管。"},
+        {"lv": 2, "q": "下面哪一個是絕緣體（不容易導電）？", "options": ["鋁箔紙", "橡皮擦", "鐵釘", "銅線"], "answer": 1, "hint": "橡皮擦不導電；鋁、鐵、銅都是金屬，是導體。"},
+
+        {"lv": 3, "q": "上弦月之後，接下來幾天月亮亮的部分會怎樣？", "options": ["都不會變", "變成左邊亮", "越來越大，接近滿月", "越來越小，接近新月"], "answer": 2, "hint": "上弦月（初七八）之後往滿月（十五）走，亮面會越來越大。"},
+        {"lv": 3, "q": "今天晚上看到滿月，大約一個星期後會看到什麼月相？", "options": ["新月", "還是滿月", "下弦月", "上弦月"], "answer": 2, "hint": "滿月大約十五，再過約 7 天是二十二、二十三，是下弦月。"},
+        {"lv": 3, "q": "今晚 7 點看到月亮在東方天空，明晚 7 點在同一個地方看，月亮的位置會怎樣？", "options": ["完全一樣", "比較偏東、比較低", "一定看不到", "比較偏西、比較高"], "answer": 1, "hint": "月亮每天大約晚 50 分鐘升起，同一時間看，它還「沒爬那麼高」，所以偏東、偏低。"},
+        {"lv": 3, "q": "觀察月亮時，用什麼來記錄月亮的方位和高度角？", "options": ["溫度計和量杯", "磅秤和直尺", "指北針和拳頭", "放大鏡和手電筒"], "answer": 2, "hint": "指北針看方位；手臂伸直，用幾個拳頭來估高度角。"},
+        {"lv": 3, "q": "荷花的莖（蓮藕）裡有很多孔洞，有什麼用處？", "options": ["用來儲存泥沙", "讓魚躲進去", "讓空氣送到埋在泥土裡的部分", "讓莖變得比較重"], "answer": 2, "hint": "泥土裡空氣很少，孔洞像通風管，讓空氣送到水下的部分。"},
+        {"lv": 3, "q": "下面哪一組「都是」漂浮植物？", "options": ["金魚藻、水蘊草", "荷花、筊白筍", "睡蓮、臺灣萍蓬草", "布袋蓮、浮萍"], "answer": 3, "hint": "布袋蓮和浮萍都漂在水面；荷花、筊白筍是挺水，金魚藻是沉水，睡蓮是浮葉。"},
+        {"lv": 3, "q": "筊白筍是哪一類水生植物？", "options": ["挺水植物", "漂浮植物", "沉水植物", "浮葉植物"], "answer": 0, "hint": "筊白筍的根在泥土裡，莖葉高高挺出水面，是挺水植物。"},
+        {"lv": 3, "q": "用水管和虹吸現象幫魚缸換水，出水口要放在哪裡？", "options": ["比魚缸的水面低", "比魚缸的水面高", "放哪裡都可以", "和魚缸的水面一樣高"], "answer": 0, "hint": "水管先裝滿水，出水口比水面低，水才會一直流出來。"},
+        {"lv": 3, "q": "衛生紙和塑膠片的一角都泡進有顏色的水，過一會兒會怎樣？", "options": ["只有塑膠片會往上爬", "衛生紙的顏色水往上爬，塑膠片不會", "兩個都會往上爬", "兩個都不會"], "answer": 1, "hint": "衛生紙有很多細縫會產生毛細現象，塑膠片沒有細縫。"},
+        {"lv": 3, "q": "毛細現象裡，縫隙越細，水會怎樣？", "options": ["一定會流掉", "爬得越高", "完全不會爬", "爬得越低"], "answer": 1, "hint": "縫隙越細，毛細現象越明顯，水爬得越高。"},
+        {"lv": 3, "q": "電池、電線、燈泡接成電路，中間接上哪一個，燈泡「不會」亮？", "options": ["迴紋針", "鐵湯匙", "銅板", "木頭積木"], "answer": 3, "hint": "木頭是絕緣體，電流不能通過；鐵、銅是導體。"},
+        {"lv": 3, "q": "為什麼電線外面要包一層塑膠？", "options": ["讓電線比較漂亮", "讓電流跑得更快", "塑膠是絕緣體，可以避免觸電", "讓電線變重"], "answer": 2, "hint": "裡面的銅線是導體會導電，外面包絕緣的塑膠，人碰到才安全。"},
+        {"lv": 3, "q": "把鉛筆的筆芯（石墨）接進電路裡，燈泡會怎樣？", "options": ["不會亮，石墨是絕緣體", "會亮，石墨是導體", "會爆炸", "會變顏色"], "answer": 1, "hint": "石墨雖然不是金屬，但是可以導電，是導體。"}
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+:root{
+  --bg:#f6f3ea; --surface:#fffdf7; --surface-2:#efe9da; --ink:#23302b; --ink-soft:#5c6a63;
+  --line:#ddd5c2; --brand:#2f6f5e; --brand-ink:#ffffff; --accent:#ffb627; --accent-ink:#3a2a00;
+  --good:#2e8b57; --good-bg:#e3f4e9; --bad:#c0392b; --bad-bg:#fbe6e2;
+  --xp-track:#e4ddca; --shadow:0 2px 0 rgba(35,48,43,.08), 0 8px 24px rgba(35,48,43,.06);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141a18; --surface:#1d2522; --surface-2:#26302c; --ink:#eef2ee; --ink-soft:#a5b3ac;
+    --line:#33403b; --brand:#5fbfa3; --brand-ink:#0d1714; --accent:#ffc857; --accent-ink:#2a1e00;
+    --good:#6fd39b; --good-bg:#1d3427; --bad:#ff8a7a; --bad-bg:#3a2220;
+    --xp-track:#2c3833; --shadow:0 2px 0 rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141a18; --surface:#1d2522; --surface-2:#26302c; --ink:#eef2ee; --ink-soft:#a5b3ac;
+  --line:#33403b; --brand:#5fbfa3; --brand-ink:#0d1714; --accent:#ffc857; --accent-ink:#2a1e00;
+  --good:#6fd39b; --good-bg:#1d3427; --bad:#ff8a7a; --bad-bg:#3a2220;
+  --xp-track:#2c3833; --shadow:0 2px 0 rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  font-size:16px; line-height:1.6; -webkit-text-size-adjust:100%;
+  overflow-x:hidden;
+}
+.wrap{max-width:520px;margin:0 auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;cursor:pointer}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.app-name{font-weight:800;font-size:18px;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.app-name svg{width:28px;height:28px;flex:none}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;min-width:44px;height:44px;padding:0 10px;font-size:14px}
+.top-btns{display:flex;gap:6px;flex:none}
+.icon-btn.off{opacity:.4;text-decoration:line-through}
+.sample-note{background:var(--surface-2);border:1px dashed var(--line);border-radius:12px;padding:8px 12px;font-size:13px;color:var(--ink-soft);margin-bottom:12px}
+.warn{background:var(--bad-bg);color:var(--bad);border-radius:12px;padding:8px 12px;font-size:13px;margin-bottom:12px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px}
+.section-title{font-size:15px;font-weight:800;margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline}
+.section-title small{font-weight:500;color:var(--ink-soft);font-size:13px}
+
+/* 玩家卡 */
+.player{display:grid;grid-template-columns:72px 1fr;gap:14px;align-items:center}
+.badge{width:72px;height:72px;border-radius:20px;background:var(--brand);color:var(--brand-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.badge .lv-label{font-size:11px;font-weight:700;opacity:.85;letter-spacing:.08em}
+.badge .lv-num{font-size:30px;font-weight:900}
+.name-row{display:flex;align-items:center;gap:6px;min-width:0}
+.name{font-size:20px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.edit-name{border:none;background:none;color:var(--ink-soft);font-size:13px;padding:4px 6px;border-radius:8px;text-decoration:underline}
+.title-chip{display:inline-block;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:800;padding:2px 10px;border-radius:999px;margin-top:2px}
+.xp{margin-top:14px}
+.xp-meta{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-bottom:4px}
+.xp-track{height:14px;background:var(--xp-track);border-radius:999px;overflow:hidden}
+.xp-fill{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--accent));border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.stat{background:var(--surface-2);border-radius:14px;padding:8px;text-align:center}
+.stat b{display:block;font-size:20px;line-height:1.2}
+.stat span{font-size:12px;color:var(--ink-soft)}
+
+/* 任務 */
+.task{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;background:var(--surface);width:100%;text-align:left;min-height:56px}
+.task:last-child{margin-bottom:0}
+.check{width:28px;height:28px;border-radius:9px;border:2px solid var(--line);flex:none;display:flex;align-items:center;justify-content:center;font-weight:900;color:transparent;transition:.2s}
+.task.done{background:var(--good-bg);border-color:transparent}
+.task.done .check{background:var(--good);border-color:var(--good);color:var(--surface)}
+.task.done .task-label{text-decoration:line-through;color:var(--ink-soft)}
+.task-label{flex:1;min-width:0}
+.task-xp{font-size:13px;font-weight:800;color:var(--brand);flex:none}
+.all-done{margin-top:10px;text-align:center;font-weight:800;color:var(--good);display:none}
+
+/* 科目卡 */
+.skills{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:10px}
+.skills.grid2{grid-auto-flow:row;grid-template-columns:1fr 1fr}
+.skill{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:12px 6px;text-align:center;min-height:120px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.skill-icon{width:44px;height:44px;border-radius:14px;color:#fff;font-weight:900;font-size:20px;display:flex;align-items:center;justify-content:center}
+.skill-name{font-weight:800}
+.skill-sub{font-size:12px;color:var(--ink-soft);line-height:1.3}
+
+/* 傳給爸爸 */
+.primary{width:100%;border:none;border-radius:14px;background:var(--brand);color:var(--brand-ink);font-weight:800;font-size:17px;min-height:52px}
+.secondary{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--surface);font-weight:700;min-height:48px}
+.report{width:100%;min-height:170px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--ink);padding:10px;font:inherit;font-size:14px;resize:vertical;margin:10px 0}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.footer{text-align:center;font-size:12px;color:var(--ink-soft);margin-top:8px}
+.footer button{border:none;background:none;text-decoration:underline;color:var(--ink-soft);font-size:12px;padding:8px}
+
+/* 闖關畫面 */
+.quiz{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;display:none}
+.quiz.open{display:block}
+.quiz .wrap{padding-top:calc(16px + env(safe-area-inset-top))}
+.progress-dots{display:flex;gap:6px;margin:4px 0 14px}
+.dot{flex:1;height:8px;border-radius:999px;background:var(--xp-track)}
+.dot.ok{background:var(--good)} .dot.no{background:var(--bad)} .dot.now{background:var(--accent)}
+.q-text{font-size:20px;font-weight:800;line-height:1.5;margin:0 0 14px}
+.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:10px;font-size:18px;min-height:54px}
+.opt.right{border-color:var(--good);background:var(--good-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt:disabled{cursor:default}
+.feedback{border-radius:14px;padding:12px 14px;margin:6px 0 14px;display:none}
+.feedback.show{display:block}
+.feedback.ok{background:var(--good-bg);color:var(--good)}
+.feedback.no{background:var(--bad-bg);color:var(--bad)}
+.feedback p{margin:2px 0;color:var(--ink)}
+.result-big{font-size:44px;font-weight:900;text-align:center;margin:20px 0 4px}
+.result-sub{text-align:center;color:var(--ink-soft);margin-bottom:12px}
+.result-badge{text-align:center;font-weight:800;border-radius:14px;padding:10px 12px;margin:0 0 16px}
+.result-badge.ok{background:var(--good-bg);color:var(--good)}
+.result-badge.no{background:var(--surface-2);color:var(--ink)}
+.stack>*{margin-bottom:10px}
+
+/* 選關卡 */
+.stage-intro{margin:0 0 12px;color:var(--ink-soft);font-size:14px}
+.stage{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:10px;min-height:76px}
+.stage.locked{opacity:.55}
+.stage-num{width:46px;height:46px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:#fff}
+.stage-info{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.4}
+.stage-info b{font-size:17px}
+.stage-info span{font-size:13px;color:var(--ink-soft)}
+.stage-info .stage-rec{color:var(--ink);font-weight:700}
+.qtimer{font-weight:900;font-variant-numeric:tabular-nums;font-size:17px;padding:6px 12px;border-radius:999px;background:var(--surface-2);flex:none}
+.qtimer.low{background:var(--bad-bg);color:var(--bad)}
+.quiz .app-name{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block}
+
+/* 提示訊息與升級 */
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,120px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;z-index:40;transition:transform .3s;max-width:calc(100% - 32px);text-align:center}
+.toast.show{transform:translate(-50%,0)}
+.levelup{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(10,15,13,.55);padding:16px}
+.levelup.show{display:flex}
+.levelup-box{background:var(--surface);border-radius:24px;padding:24px 20px;text-align:center;max-width:340px;width:100%;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.levelup-box .star{width:84px;height:84px;margin:0 auto 6px}
+.levelup-box h2{margin:0;font-size:26px}
+.levelup-box p{margin:6px 0 18px;color:var(--ink-soft)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.float-xp{position:fixed;font-weight:900;color:var(--brand);pointer-events:none;z-index:45;animation:rise .9s ease-out forwards}
+@keyframes rise{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-40px)}}
+.primary:disabled{opacity:.45;cursor:not-allowed}
+
+/* 今日獎勵卡 */
+.reward-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.reward-gift{width:56px;height:56px;flex:none}
+.reward-row b{font-size:18px;display:block;line-height:1.3}
+.reward-row span{font-size:13px;color:var(--ink-soft)}
+.reward-card.ready{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent),var(--shadow)}
+.reward-card.ready .primary{background:var(--accent);color:var(--accent-ink);animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.timer{text-align:center;margin-top:4px}
+.timer-num{font-size:48px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:.04em;line-height:1.2}
+.timer-sub{font-size:13px;color:var(--ink-soft);margin-bottom:10px}
+
+/* 領獎儀式 */
+.ceremony{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:16px;overflow:hidden;
+  background:radial-gradient(circle at 50% 42%, #2b5a4c 0%, #10201b 70%)}
+.ceremony.show{display:flex}
+.cer-stage{position:relative;width:100%;max-width:340px;text-align:center;color:#fff}
+.rays{position:absolute;left:50%;top:120px;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;opacity:0;
+  background:repeating-conic-gradient(rgba(255,214,102,.28) 0 10deg, transparent 10deg 24deg);pointer-events:none}
+.ceremony.open .rays{animation:raysIn .6s ease-out forwards, spin 14s linear infinite}
+@keyframes raysIn{to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gift{position:relative;width:180px;height:200px;margin:0 auto}
+.gift svg{position:absolute;left:0;width:180px;overflow:visible}
+.gift .box{top:80px;height:120px}
+.gift .lid{top:44px;height:56px;transform-origin:50% 100%}
+.ceremony.shake .gift{animation:shake .9s ease-in-out}
+@keyframes shake{0%,100%{transform:rotate(0)}15%{transform:rotate(-6deg)}30%{transform:rotate(6deg)}45%{transform:rotate(-8deg)}60%{transform:rotate(8deg)}75%{transform:rotate(-4deg)}90%{transform:rotate(4deg)}}
+.ceremony.open .gift .lid{animation:lidOff .7s cubic-bezier(.2,.9,.3,1) forwards}
+@keyframes lidOff{to{transform:translate(70px,-150px) rotate(38deg);opacity:0}}
+.ticket{position:absolute;left:50%;top:110px;transform:translate(-50%,0) scale(.3);opacity:0;z-index:2;
+  background:#fff8e1;color:#4a3300;border-radius:16px;padding:14px 22px;font-weight:900;font-size:24px;white-space:nowrap;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);border:3px dashed #ffb627}
+.ticket small{display:block;font-size:12px;font-weight:700;letter-spacing:.15em;color:#a06b00}
+.ceremony.open .ticket{animation:ticketUp .8s .25s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes ticketUp{to{transform:translate(-50%,-110px) scale(1);opacity:1}}
+.cer-text{opacity:0;transform:translateY(12px);margin-top:8px}
+.ceremony.open .cer-text{animation:fadeUp .5s 1s ease-out forwards}
+@keyframes fadeUp{to{opacity:1;transform:none}}
+.cer-text h2{margin:0;font-size:26px}
+.cer-text p{margin:6px 0 18px;color:#d6e8e1}
+.cer-text .primary{background:#ffb627;color:#3a2a00}
+.confetti{position:absolute;top:-20px;width:10px;height:14px;border-radius:2px;opacity:.95;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(var(--rot));}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}
+  .ceremony.open .ticket{transform:translate(-50%,-110px) scale(1);opacity:1}
+  .ceremony.open .cer-text,.ceremony.open .rays{opacity:1;transform:none}
+  .ceremony.open .gift .lid{opacity:0}}
+</style>
+</head>
+<body>
+<main class="wrap" id="home">
+  <div class="topbar">
+    <div class="app-name">
+      <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#2f6f5e"/><path d="M256 110 L292 210 L398 214 L314 278 L344 380 L256 320 L168 380 L198 278 L114 214 L220 210 Z" fill="#ffd166"/></svg>
+      <span id="appName">今天也升一級</span>
+    </div>
+    <div class="top-btns">
+      <button class="icon-btn" id="musicBtn" data-nosfx aria-label="背景音樂開關" aria-pressed="true">🎵</button>
+      <button class="icon-btn" id="sfxBtn" data-nosfx aria-label="按鍵音效開關" aria-pressed="true">🔊</button>
+      <button class="icon-btn" id="themeBtn" aria-label="切換深淺色">🌓</button>
+    </div>
+  </div>
+
+  <div class="warn" id="storageWarn" hidden>這支手機現在存不了進度（可能是無痕模式），關掉網頁後進度會不見。</div>
+  <div class="sample-note" id="sampleNote" hidden></div>
+
+  <!-- 玩家卡 -->
+  <section class="card" aria-label="我的等級">
+    <div class="player">
+      <div class="badge"><span class="lv-label">LEVEL</span><span class="lv-num" id="lvNum">1</span></div>
+      <div style="min-width:0">
+        <div class="name-row"><span class="name" id="playerName">小勇者</span><button class="edit-name" id="editName">改名字</button></div>
+        <span class="title-chip" id="titleChip">剛發芽的小種子</span>
+      </div>
+    </div>
+    <div class="xp">
+      <div class="xp-meta"><span>經驗值</span><span id="xpText">0 / 100</span></div>
+      <div class="xp-track" role="progressbar" aria-label="經驗值" aria-valuemin="0" aria-valuemax="100" id="xpBar"><div class="xp-fill" id="xpFill"></div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="streak">0</b><span>連續天數</span></div>
+      <div class="stat"><b id="todayXp">0</b><span>今天得到 XP</span></div>
+      <div class="stat"><b id="totalXp">0</b><span>總經驗值</span></div>
+    </div>
+  </section>
+
+  <!-- 今日任務 -->
+  <section class="card" aria-label="今日任務">
+    <h2 class="section-title">今日任務 <small id="taskCount">0 / 3</small></h2>
+    <div id="taskList"></div>
+    <div class="all-done" id="allDone">今天的任務全部完成，太厲害了！</div>
+  </section>
+
+  <!-- 今日獎勵 -->
+  <section class="card reward-card" id="rewardCard" aria-label="今日獎勵">
+    <h2 class="section-title">今日獎勵 <small id="rewardState">任務全部完成就能領</small></h2>
+    <div class="reward-row">
+      <svg class="reward-gift" viewBox="0 0 100 100" aria-hidden="true"><rect x="12" y="40" width="76" height="52" rx="8" fill="#d1495b"/><rect x="6" y="26" width="88" height="20" rx="6" fill="#e86a7a"/><rect x="44" y="26" width="12" height="66" fill="#ffd166"/><path d="M50 26 C36 8 20 16 30 26 Z M50 26 C64 8 80 16 70 26 Z" fill="#ffd166"/></svg>
+      <div><b id="rewardLabel">玩遊戲 10 分鐘</b><span id="rewardHint">還差 3 個任務</span></div>
+    </div>
+    <button class="primary" id="rewardBtn" disabled>🔒 完成任務才能領</button>
+    <div class="timer" id="timerBox" hidden>
+      <div class="timer-num" id="timerNum">10:00</div>
+      <div class="timer-sub" id="timerSub">準備好就按開始</div>
+      <button class="primary" id="timerBtn">開始計時</button>
+    </div>
+  </section>
+
+  <!-- 科目技能卡 -->
+  <section class="card" aria-label="科目闖關">
+    <h2 class="section-title">科目闖關 <small>點一科開始</small></h2>
+    <div class="skills" id="skillList"></div>
+  </section>
+
+  <!-- 傳給爸爸 -->
+  <section class="card" aria-label="傳給爸爸">
+    <h2 class="section-title" id="sendTitle">傳給爸爸</h2>
+    <button class="primary" id="makeReport">整理今天的進度</button>
+    <div id="reportArea" hidden>
+      <textarea class="report" id="reportText" readonly aria-label="今天的進度文字"></textarea>
+      <div class="row">
+        <button class="primary" id="copyBtn">複製文字</button>
+        <button class="secondary" id="shareBtn" hidden>分享到 Line…</button>
+      </div>
+      <p class="footer" style="margin-top:10px">複製後打開 Line，貼到跟爸爸的聊天室就好。</p>
+    </div>
+  </section>
+
+  <div class="footer">進度只存在這支手機裡 <button id="resetBtn">清除全部進度</button></div>
+</main>
+
+<!-- 闖關畫面 -->
+<section class="quiz" id="quiz" aria-modal="true" role="dialog" aria-label="闖關答題">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="app-name" id="quizTitle">數學闖關</div>
+      <span class="qtimer" id="qTimer" hidden aria-live="off">⏱ 0:00</span>
+      <button class="icon-btn" id="quizClose">離開</button>
+    </div>
+    <div class="progress-dots" id="dots"></div>
+    <div id="quizBody"></div>
+  </div>
+</section>
+
+<div class="ceremony" id="ceremony" role="dialog" aria-label="領取獎勵">
+  <div class="cer-stage">
+    <div class="rays"></div>
+    <div class="gift">
+      <div class="ticket" id="cerTicket"><small>獎勵券</small><span id="cerTicketText">🎮 玩遊戲 10 分鐘</span></div>
+      <svg class="box" viewBox="0 0 180 120" aria-hidden="true"><rect x="10" y="0" width="160" height="120" rx="12" fill="#d1495b"/><rect x="10" y="0" width="160" height="16" fill="#b33a4b"/><rect x="78" y="0" width="24" height="120" fill="#ffd166"/></svg>
+      <svg class="lid" viewBox="0 0 180 56" aria-hidden="true"><path d="M90 20 C64 -12 34 2 54 20 Z M90 20 C116 -12 146 2 126 20 Z" fill="#ffd166"/><rect x="0" y="18" width="180" height="38" rx="10" fill="#e86a7a"/><rect x="78" y="18" width="24" height="38" fill="#ffd166"/></svg>
+    </div>
+    <div class="cer-text">
+      <h2 id="cerTitle">恭喜你！</h2>
+      <p id="cerSub">今天的任務全部完成，換到獎勵了</p>
+      <button class="primary" id="cerOk">收下獎勵</button>
+    </div>
+  </div>
+</div>
+
+<div class="levelup" id="levelup" role="dialog" aria-label="升級了">
+  <div class="levelup-box">
+    <svg class="star" viewBox="0 0 512 512" aria-hidden="true"><path d="M256 40 L310 190 L470 196 L344 292 L390 448 L256 358 L122 448 L168 292 L42 196 L202 190 Z" fill="#ffb627"/></svg>
+    <h2 id="luTitle">升到 Lv.2！</h2>
+    <p id="luSub">新稱號：會思考的小樹苗</p>
+    <button class="primary" id="luOk">太棒了，繼續！</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  // ---------- 讀設定 ----------
+  var CFG;
+  try { CFG = JSON.parse(document.getElementById("config").textContent); }
+  catch(e){ CFG = {appName:"今天也升一級",defaultName:"小勇者",parentName:"爸爸",xpPerLevel:100,xpPerCorrect:10,titles:[{level:1,title:"小種子"}],tasks:[],subjects:[]}; }
+  var KEY = CFG.storageKey || "levelup-kid-v1"; // 每個孩子的檔案用不同名字，進度才不會混在一起
+  function quizList(t){ return !t.quiz ? [] : (Array.isArray(t.quiz) ? t.quiz : [t.quiz]); }
+  var $ = function(id){ return document.getElementById(id); };
+
+  // ---------- 存讀進度（讀不到也照常運作） ----------
+  var canStore = true;
+  function load(){
+    try { var raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; }
+    catch(e){ canStore = false; return null; }
+  }
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(S)); }
+    catch(e){ canStore = false; $("storageWarn").hidden = false; }
+  }
+  function today(d){ d = d || new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function yesterday(){ var d = new Date(); d.setDate(d.getDate()-1); return today(d); }
+
+  var S = load() || {};
+  S.unlock = S.unlock || {};   // 每科開到第幾關（不會每天重來）
+  S.best = S.best || {};       // 每科每關的最佳紀錄
+  S.name = S.name || CFG.defaultName;
+  S.xp = S.xp || 0;
+  S.streak = S.streak || 0;
+  S.lastActive = S.lastActive || "";
+  S.theme = S.theme || "";
+  if (!S.day || S.day.date !== today()) {
+    S.day = { date: today(), tasks: {}, xp: 0, answered: {}, quiz: {} };
+  }
+  // 連續天數：昨天之前就斷了，畫面顯示 0（今天第一次得分再接上）
+  if (S.lastActive && S.lastActive !== today() && S.lastActive !== yesterday()) { S.streak = 0; }
+  if (!canStore) $("storageWarn").hidden = false;
+
+  // ---------- 等級計算 ----------
+  function levelOf(xp){ return Math.floor(xp / CFG.xpPerLevel) + 1; }
+  function titleOf(lv){
+    var t = CFG.titles[0] ? CFG.titles[0].title : "";
+    CFG.titles.forEach(function(x){ if (lv >= x.level) t = x.title; });
+    return t;
+  }
+
+  function addXp(n, fromEl){
+    var before = levelOf(S.xp);
+    S.xp += n; S.day.xp += n;
+    if (S.lastActive !== today()) {
+      S.streak = (S.lastActive === yesterday()) ? S.streak + 1 : 1;
+      S.lastActive = today();
+    }
+    save(); render();
+    if (fromEl) floatXp(fromEl, n);
+    var after = levelOf(S.xp);
+    if (after > before) showLevelUp(after);
+  }
+
+  // ---------- 畫面 ----------
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  function render(){
+    $("appName").textContent = CFG.appName;
+    document.title = CFG.appName;
+    $("sampleNote").textContent = CFG.note || "";
+    $("sampleNote").hidden = !CFG.note;
+    $("sendTitle").textContent = "傳給" + CFG.parentName;
+    var lv = levelOf(S.xp), inLv = S.xp % CFG.xpPerLevel;
+    $("playerName").textContent = S.name;
+    $("lvNum").textContent = lv;
+    $("titleChip").textContent = titleOf(lv);
+    $("xpText").textContent = inLv + " / " + CFG.xpPerLevel;
+    $("xpFill").style.width = (inLv / CFG.xpPerLevel * 100) + "%";
+    $("xpBar").setAttribute("aria-valuenow", inLv);
+    $("streak").textContent = S.streak;
+    $("todayXp").textContent = S.day.xp;
+    $("totalXp").textContent = S.xp;
+
+    var done = 0;
+    $("taskList").innerHTML = CFG.tasks.map(function(t){
+      var d = !!S.day.tasks[t.id]; if (d) done++;
+      return '<button class="task'+(d?' done':'')+'" data-task="'+esc(t.id)+'" aria-pressed="'+d+'">'+
+        '<span class="check">✓</span><span class="task-label">'+esc(t.label)+'</span>'+
+        '<span class="task-xp">'+(d?'已完成':'+'+t.xp+' XP')+'</span></button>';
+    }).join("");
+    $("taskCount").textContent = done + " / " + CFG.tasks.length;
+    $("allDone").style.display = (CFG.tasks.length && done === CFG.tasks.length) ? "block" : "none";
+
+    $("skillList").innerHTML = CFG.subjects.map(function(s){
+      var n = stagesOf(s).length, un = Math.min(unlocked(s), n), tb = todayTop(s);
+      var sub = "開到第 " + un + " / " + n + " 關" + (tb ? "<br>今天第 " + tb.lv + " 關 " + tb.r.right + "/" + tb.r.total : "");
+      return '<button class="skill" data-subject="'+esc(s.id)+'">'+
+        '<span class="skill-icon" style="background:'+esc(s.color)+'">'+esc(s.icon)+'</span>'+
+        '<span class="skill-name">'+esc(s.name)+'</span><span class="skill-sub">'+sub+'</span></button>';
+    }).join("");
+    $("skillList").classList.toggle("grid2", CFG.subjects.length > 3);
+    renderReward(done);
+  }
+
+  // ---------- 今日獎勵（任務全完成才能領，一天一次） ----------
+  var RW = CFG.reward || null;
+  function rewardState(){ S.day.reward = S.day.reward || { redeemed: false, timerEnd: 0, timerDone: false }; return S.day.reward; }
+  function renderReward(done){
+    $("rewardCard").hidden = !RW;
+    if (!RW) return;
+    var r = rewardState(), left = CFG.tasks.length - done, ready = left <= 0;
+    $("rewardLabel").textContent = (RW.icon ? RW.icon + " " : "") + RW.label;
+    $("rewardCard").classList.toggle("ready", ready && !r.redeemed);
+    if (r.redeemed) {
+      $("rewardState").textContent = "今天已經領過了";
+      $("rewardHint").textContent = "明天完成任務可以再領一次";
+      $("rewardBtn").hidden = true;
+      $("timerBox").hidden = !RW.minutes;
+      drawTimer();
+    } else {
+      $("rewardBtn").hidden = false;
+      $("timerBox").hidden = true;
+      $("rewardBtn").disabled = !ready;
+      $("rewardBtn").textContent = ready ? "🎁 領取今天的獎勵" : "🔒 完成任務才能領";
+      $("rewardState").textContent = ready ? "可以領了！" : "任務全部完成就能領";
+      $("rewardHint").textContent = ready ? "你今天好認真，打開禮物吧" : "還差 " + left + " 個任務";
+    }
+  }
+
+  // 音樂：用手機內建的發聲功能即時演奏，不需要音樂檔
+  var AC = null;
+  function audio(){
+    if (RW && RW.sound === false) return null;
+    return ac0();
+  }
+  function ac0(){
+    try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); return AC; }
+    catch(e){ return null; }
+  }
+  function note(ac, freq, start, dur, type, vol){
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || "triangle"; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(vol || 0.2, start + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g); g.connect(ac.destination); o.start(start); o.stop(start + dur + 0.05);
+  }
+  function playDrumroll(){
+    var ac = audio(); if (!ac) return;
+    var t = ac.currentTime;
+    for (var i = 0; i < 14; i++) note(ac, 180 + i * 12, t + i * 0.062, 0.05, "square", 0.05 + i * 0.006);
+  }
+  function playFanfare(){
+    var ac = audio(); if (!ac) return;
+    var t = ac.currentTime + 0.02;
+    // 上行琶音 → 長和弦 → 亮晶晶的高音
+    [523.25, 659.25, 783.99, 1046.5].forEach(function(f, i){ note(ac, f, t + i * 0.11, 0.22, "triangle", 0.22); });
+    [523.25, 659.25, 783.99, 1046.5].forEach(function(f){ note(ac, f, t + 0.5, 1.2, "triangle", 0.12); });
+    note(ac, 261.63, t + 0.5, 1.2, "sine", 0.18);
+    [1568, 2093, 1760, 2349, 2637].forEach(function(f, i){ note(ac, f, t + 0.6 + i * 0.09, 0.18, "sine", 0.06); });
+  }
+  function playTimeUp(){
+    var ac = audio(); if (!ac) return;
+    var t = ac.currentTime + 0.02;
+    [0, 0.35, 0.7].forEach(function(d){ note(ac, 880, t + d, 0.18, "sine", 0.25); note(ac, 659.25, t + d + 0.16, 0.18, "sine", 0.2); });
+  }
+
+  function confetti(){
+    var colors = ["#ffd166", "#d1495b", "#5fbfa3", "#3d8bfd", "#ffffff", "#ff9f1c"];
+    var box = $("ceremony");
+    for (var i = 0; i < 70; i++) {
+      var c = document.createElement("span");
+      c.className = "confetti";
+      c.style.left = (Math.random() * 100) + "%";
+      c.style.background = colors[i % colors.length];
+      c.style.setProperty("--dx", (Math.random() * 120 - 60) + "px");
+      c.style.setProperty("--rot", (Math.random() * 720 - 360) + "deg");
+      c.style.animationDuration = (1.8 + Math.random() * 1.6) + "s";
+      c.style.animationDelay = (Math.random() * 0.5) + "s";
+      box.appendChild(c);
+      (function(el){ setTimeout(function(){ el.remove(); }, 4200); })(c);
+    }
+  }
+
+  var cerTimers = [];
+  function startCeremony(){
+    var cer = $("ceremony");
+    cerTimers.forEach(clearTimeout); cerTimers = [];
+    $("cerTicketText").textContent = (RW.icon ? RW.icon + " " : "") + RW.label;
+    $("cerTitle").textContent = "恭喜 " + S.name + "！";
+    cer.className = "ceremony show shake";
+    document.body.style.overflow = "hidden";
+    bgmSync(); // 背景音樂先停，讓位給領獎音樂
+    playDrumroll();
+    cerTimers.push(setTimeout(function(){
+      cer.className = "ceremony show open";
+      playFanfare(); confetti();
+      if (navigator.vibrate) { try { navigator.vibrate([60, 40, 120]); } catch(e){} }
+    }, 900));
+    cerTimers.push(setTimeout(function(){ $("cerOk").focus({preventScroll:true}); }, 1500));
+  }
+  function endCeremony(){
+    cerTimers.forEach(clearTimeout); cerTimers = [];
+    $("ceremony").className = "ceremony";
+    document.body.style.overflow = "";
+    render(); bgmSync();
+    toast("獎勵收好了！要開始時按「開始計時」");
+  }
+  $("rewardBtn").addEventListener("click", function(){
+    var r = rewardState();
+    var allDone = CFG.tasks.every(function(t){ return S.day.tasks[t.id]; });
+    if (!allDone || r.redeemed) return;
+    r.redeemed = true; save();
+    startCeremony();
+  });
+  $("cerOk").addEventListener("click", endCeremony);
+
+  // 獎勵計時器：記住結束時間，重新整理或切到別的 App 回來也算得準
+  var tick = null;
+  function fmt(sec){ sec = Math.max(0, Math.ceil(sec)); return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); }
+  function drawTimer(){
+    if (!RW || !RW.minutes) return;
+    var r = rewardState(), now = Date.now();
+    clearInterval(tick); tick = null;
+    if (r.timerDone) {
+      $("timerNum").textContent = "0:00";
+      $("timerSub").textContent = "時間到囉！今天的獎勵用完了";
+      $("timerBtn").hidden = true;
+    } else if (r.timerEnd && r.timerEnd > now) {
+      $("timerNum").textContent = fmt((r.timerEnd - now) / 1000);
+      $("timerSub").textContent = "好好玩！時間到會響鈴";
+      $("timerBtn").hidden = false; $("timerBtn").textContent = "提早結束";
+      tick = setInterval(function(){
+        var rest = (r.timerEnd - Date.now()) / 1000;
+        if (rest <= 0) { r.timerDone = true; save(); playTimeUp(); toast("時間到囉！"); drawTimer(); return; }
+        $("timerNum").textContent = fmt(rest);
+      }, 250);
+    } else if (r.timerEnd && r.timerEnd <= now) {
+      r.timerDone = true; save(); drawTimer();
+    } else {
+      $("timerNum").textContent = fmt(RW.minutes * 60);
+      $("timerSub").textContent = "準備好就按開始";
+      $("timerBtn").hidden = false; $("timerBtn").textContent = "開始計時";
+    }
+  }
+  $("timerBtn").addEventListener("click", function(){
+    var r = rewardState();
+    if (r.timerEnd && r.timerEnd > Date.now()) {
+      if (!window.confirm("確定要提早結束嗎？今天的獎勵時間就用完了。")) return;
+      r.timerDone = true;
+    } else {
+      audio(); // 先在點擊時打開聲音，時間到才響得出來
+      r.timerEnd = Date.now() + RW.minutes * 60 * 1000;
+    }
+    save(); drawTimer();
+  });
+
+  // ---------- 背景音樂與音效（手機即時發聲，不用音檔、不用網路） ----------
+  if (S.music == null) S.music = true;
+  if (S.sfx == null) S.sfx = true;
+  var soundReady = false; // 手機規定：孩子先點一下畫面，才可以出聲音
+  function tone(ac, freq, start, dur, type, vol, dest){
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || "square"; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(vol || 0.1, start + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g); g.connect(dest || ac.destination); o.start(start); o.stop(start + dur + 0.05);
+  }
+  function seq(ac, t, freqs, gap, dur, type, vol){ freqs.forEach(function(f, i){ tone(ac, f, t + i * gap, dur, type, vol); }); }
+  var SFX = {
+    tap:     function(ac, t){ tone(ac, 1200, t, 0.04, "square", 0.035); },
+    correct: function(ac, t){ tone(ac, 1046.5, t, 0.1, "square", 0.08); tone(ac, 1568, t + 0.09, 0.22, "square", 0.08); },
+    wrong:   function(ac, t){ tone(ac, 247, t, 0.14, "sawtooth", 0.06); tone(ac, 185, t + 0.14, 0.3, "sawtooth", 0.06); },
+    coin:    function(ac, t){ tone(ac, 988, t, 0.08, "square", 0.07); tone(ac, 1319, t + 0.08, 0.3, "square", 0.07); },
+    locked:  function(ac, t){ tone(ac, 140, t, 0.18, "triangle", 0.2); tone(ac, 120, t + 0.12, 0.2, "triangle", 0.18); },
+    start:   function(ac, t){ seq(ac, t, [659, 784, 1047], 0.08, 0.12, "square", 0.07); },
+    tick:    function(ac, t){ tone(ac, 1500, t, 0.03, "sine", 0.12); },
+    timeUp:  function(ac, t){ seq(ac, t, [523, 392, 262], 0.18, 0.2, "square", 0.08); },
+    clear:   function(ac, t){ seq(ac, t, [523, 659, 784, 1047], 0.1, 0.15, "square", 0.07); [523, 659, 784, 1047].forEach(function(f){ tone(ac, f, t + 0.45, 0.7, "triangle", 0.07); }); },
+    unlock:  function(ac, t){ SFX.clear(ac, t); seq(ac, t + 0.9, [1319, 1568, 2093, 2637, 3136], 0.06, 0.15, "sine", 0.05); },
+    fail:    function(ac, t){ seq(ac, t, [392, 349, 330, 294], 0.16, 0.2, "triangle", 0.12); },
+    levelUp: function(ac, t){ seq(ac, t, [392, 523, 659, 784], 0.09, 0.12, "square", 0.07); tone(ac, 1047, t + 0.38, 0.6, "square", 0.07); tone(ac, 523, t + 0.38, 0.6, "triangle", 0.1); }
+  };
+  function sfx(name){
+    if (!S.sfx || !soundReady || !SFX[name]) return;
+    var ac = ac0(); if (!ac) return;
+    SFX[name](ac, ac.currentTime + 0.01);
+  }
+
+  // 背景音樂：首頁輕快、闖關緊張；剩 30 秒會變快。旋律用和弦音自動排出來，一直循環
+  function midi(m){ return 440 * Math.pow(2, (m - 69) / 12); }
+  var C = [60, 64, 67], G = [55, 59, 62], Am = [57, 60, 64], F = [53, 57, 60], Em = [52, 55, 59];
+  var SONGS = {
+    home: { bpm: 108, chords: [C, G, Am, F, C, Em, F, G],
+            pats: [[0, 1, 2, 1, 3, 2, 1, 2], [2, -1, 1, 0, 1, -1, 2, -1]] },
+    quiz: { bpm: 132, chords: [Am, F, C, G],
+            pats: [[0, 2, 1, 2, 3, 2, 1, 2], [3, 2, 1, 2, 0, -1, 0, -1]] }
+  };
+  var BGM = { song: null, step: 0, next: 0, timer: null, gain: null, fast: false };
+  function bgmWant(){
+    if (!S.music || !soundReady || document.hidden) return null;
+    if ($("ceremony").classList.contains("show")) return null; // 領獎時讓位給號角
+    return (Q && Q.st && !Q.finished) ? "quiz" : "home";
+  }
+  function bgmSync(){
+    var want = bgmWant();
+    if (want === BGM.song) return;
+    bgmStop();
+    if (!want) return;
+    var ac = ac0(); if (!ac) return;
+    BGM.song = want; BGM.step = 0; BGM.next = ac.currentTime + 0.15;
+    BGM.gain = ac.createGain(); BGM.gain.gain.value = 1; BGM.gain.connect(ac.destination);
+    BGM.timer = setInterval(bgmTick, 60);
+    bgmTick();
+  }
+  function bgmTick(){
+    var ac = AC, song = SONGS[BGM.song]; if (!ac || !song || !BGM.gain) return;
+    var step = 60 / (song.bpm * (BGM.fast ? 1.3 : 1)) / 2; // 八分音符
+    if (BGM.next < ac.currentTime) BGM.next = ac.currentTime + 0.05; // 卡頓後不要一次補一堆音
+    while (BGM.next < ac.currentTime + 0.25) {
+      var bar = Math.floor(BGM.step / 8) % song.chords.length, pos = BGM.step % 8;
+      var ch = song.chords[bar], p = song.pats[bar % song.pats.length][pos];
+      var tones = [ch[0] + 12, ch[1] + 12, ch[2] + 12, ch[0] + 24];
+      if (p >= 0) tone(ac, midi(tones[p]), BGM.next, step * 0.85, "square", 0.025, BGM.gain);
+      if (pos % 4 === 0) tone(ac, midi(ch[0] - 12), BGM.next, step * 3.5, "triangle", 0.09, BGM.gain);
+      BGM.next += step; BGM.step++;
+    }
+  }
+  function bgmStop(){
+    clearInterval(BGM.timer); BGM.timer = null;
+    if (BGM.gain && AC) {
+      var g = BGM.gain;
+      g.gain.setTargetAtTime(0.0001, AC.currentTime, 0.05);
+      setTimeout(function(){ try { g.disconnect(); } catch(e){} }, 500);
+    }
+    BGM.gain = null; BGM.song = null;
+  }
+  function unlockSound(){
+    if (soundReady) return;
+    soundReady = true;
+    if (S.music || S.sfx) ac0();
+    bgmSync();
+  }
+  document.addEventListener("pointerdown", unlockSound, true);
+  document.addEventListener("keydown", unlockSound, true);
+  document.addEventListener("visibilitychange", bgmSync);
+  // 按任何按鈕都有「嗶」一聲（答題選項有自己的對錯音效）
+  document.addEventListener("click", function(e){
+    var b = e.target.closest("button");
+    if (!b || b.disabled || b.classList.contains("opt") || b.hasAttribute("data-nosfx")) return;
+    sfx("tap");
+  }, true);
+
+  function drawSoundBtns(){
+    $("musicBtn").classList.toggle("off", !S.music); $("musicBtn").setAttribute("aria-pressed", S.music);
+    $("sfxBtn").classList.toggle("off", !S.sfx);     $("sfxBtn").setAttribute("aria-pressed", S.sfx);
+  }
+  $("musicBtn").addEventListener("click", function(){
+    S.music = !S.music; save(); drawSoundBtns(); bgmSync();
+    toast(S.music ? "背景音樂打開了" : "背景音樂關掉了");
+  });
+  $("sfxBtn").addEventListener("click", function(){
+    S.sfx = !S.sfx; save(); drawSoundBtns();
+    if (S.sfx) sfx("coin");
+    toast(S.sfx ? "按鍵音效打開了" : "按鍵音效關掉了");
+  });
+
+  // ---------- 今日任務 ----------
+  $("taskList").addEventListener("click", function(e){
+    var b = e.target.closest("[data-task]"); if (!b) return;
+    var id = b.getAttribute("data-task");
+    var t = CFG.tasks.filter(function(x){ return x.id === id; })[0];
+    if (!t) return;
+    if (S.day.tasks[id]) { toast("這個任務今天已經完成囉"); return; }
+    // 闖關任務：闖完才自動打勾；可以選好幾科的任務，就帶孩子去選一科
+    var ql = quizList(t);
+    if (ql.length === 1) { openQuiz(ql[0]); return; }
+    if (ql.length > 1) {
+      $("skillList").scrollIntoView({ behavior: "smooth", block: "center" });
+      toast("從「" + ql.map(function(id){ var s = CFG.subjects.filter(function(x){ return x.id === id; })[0]; return s ? s.name : id; }).join("」或「") + "」選一科闖關");
+      return;
+    }
+    S.day.tasks[id] = true;
+    sfx("coin");
+    addXp(t.xp, b);
+    toast("完成「" + t.label.replace(/（範例）/,"") + "」+" + t.xp + " XP");
+  });
+
+  // ---------- 闖關：選關卡 → 限時答題 → 看結果 ----------
+  var DEFAULT_STAGES = [{ lv: 1, name: "第 1 關", perRound: 10, seconds: 150, pass: 8 }];
+  function subjectById(id){ return CFG.subjects.filter(function(x){ return x.id === id; })[0]; }
+  function stagesOf(s){ return s.stages || CFG.stages || DEFAULT_STAGES; }
+  function stageOf(s, lv){ return stagesOf(s).filter(function(x){ return x.lv === lv; })[0]; }
+  function poolOf(s, lv){ var out = []; s.questions.forEach(function(q, k){ if ((q.lv || 1) === lv) out.push(k); }); return out; }
+  function unlocked(s){ return S.unlock[s.id] || 1; }
+  function bestOf(s, lv){ return (S.best[s.id] || {})[lv] || null; }
+  function roundSize(s, st){ return Math.min(st.perRound || 10, poolOf(s, st.lv).length); }
+  function better(right, sec, prev){ return !prev || right > prev.right || (right === prev.right && sec < prev.sec); }
+  function todayQuiz(s){ var d = S.day.quiz[s.id]; return (d && d.right == null) ? d : null; } // 舊版存法（只有一個分數）就當沒有
+  function todayTop(s){ // 今天玩過最高的那一關
+    var d = todayQuiz(s), top = null; if (!d) return null;
+    Object.keys(d).forEach(function(k){ if (!top || +k > top.lv) top = { lv: +k, r: d[k] }; });
+    return top;
+  }
+
+  var Q = null, qTick = null; // Q = {s, st, list, i, results, picked, remain, runStart}
+  $("skillList").addEventListener("click", function(e){
+    var b = e.target.closest("[data-subject]"); if (!b) return;
+    openQuiz(b.getAttribute("data-subject"));
+  });
+  function openQuiz(sid){
+    var s = subjectById(sid);
+    if (!s || !s.questions.length) return;
+    $("quiz").classList.add("open");
+    document.body.style.overflow = "hidden";
+    showStages(s);
+  }
+  function inRound(){ return Q && Q.st && !Q.finished; }
+  function closeQuiz(){
+    if (inRound() && Q.results.length && !window.confirm("現在離開，這一關的成績不會算喔。確定要離開嗎？")) return;
+    stopClock();
+    $("quiz").classList.remove("open");
+    document.body.style.overflow = "";
+    Q = null; render(); bgmSync();
+  }
+  $("quizClose").addEventListener("click", closeQuiz);
+
+  function showStages(s){
+    stopClock();
+    Q = { s: s };
+    bgmSync();
+    $("quizTitle").textContent = s.name + "闖關";
+    $("dots").innerHTML = "";
+    var un = unlocked(s);
+    $("quizBody").innerHTML =
+      '<p class="stage-intro">選一關開始！每關要在時間內答完，答對夠多題就能打開下一關，越後面越難。</p>' +
+      stagesOf(s).map(function(st){
+        var lock = st.lv > un, b = bestOf(s, st.lv), cleared = b && b.right >= st.pass;
+        var meta = roundSize(s, st) + " 題・限時 " + fmt(st.seconds) + "・答對 " + st.pass + " 題過關";
+        var rec = lock ? "🔒 先過第 " + (st.lv - 1) + " 關才能玩"
+                : b ? ("最佳紀錄 " + b.right + "/" + b.total + "・" + fmt(b.sec) + (cleared ? " ⭐" : ""))
+                : "還沒挑戰過";
+        return '<button class="stage' + (lock ? ' locked' : '') + '" data-stage="' + st.lv + '"' + (lock ? ' aria-disabled="true"' : '') + '>' +
+          '<span class="stage-num" style="background:' + esc(s.color) + '">' + (lock ? '🔒' : st.lv) + '</span>' +
+          '<span class="stage-info"><b>第 ' + st.lv + ' 關・' + esc(st.name) + '</b><span>' + meta + '</span><span class="stage-rec">' + rec + '</span></span></button>';
+      }).join("");
+    $("quiz").scrollTop = 0;
+  }
+
+  function startStage(s, lv){
+    var st = stageOf(s, lv);
+    if (!st) return;
+    if (lv > unlocked(s)) { sfx("locked"); var p = stageOf(s, lv - 1); toast("先在第 " + (lv - 1) + " 關答對 " + (p ? p.pass : "") + " 題，才能打開喔"); return; }
+    // 從這一關的題庫隨機抽題（記住原本是第幾題，經驗值才不會重複拿）
+    var idx = poolOf(s, lv);
+    for (var k = idx.length - 1; k > 0; k--) { var j = Math.floor(Math.random() * (k + 1)); var tmp = idx[k]; idx[k] = idx[j]; idx[j] = tmp; }
+    Q = { s: s, st: st, list: idx.slice(0, roundSize(s, st)), i: 0, results: [], picked: false, remain: st.seconds * 1000, runStart: 0, finished: false };
+    $("quizTitle").textContent = s.name + " 第 " + lv + " 關";
+    $("qTimer").hidden = false;
+    sfx("start");
+    showQuestion();
+    bgmSync();
+  }
+
+  // 倒數計時：看答案和提示的時候會暫停，按「下一題」才繼續
+  function timeLeft(){ return Q.remain - (Q.runStart ? Date.now() - Q.runStart : 0); }
+  function drawClock(){
+    var ms = Math.max(0, timeLeft());
+    $("qTimer").textContent = "⏱ " + fmt(ms / 1000);
+    $("qTimer").classList.toggle("low", ms <= 30000);
+    BGM.fast = ms <= 30000; // 剩 30 秒，音樂變快
+    var sec = Math.ceil(ms / 1000);
+    if (Q.runStart && sec <= 10 && sec > 0 && sec !== Q.lastTick) { Q.lastTick = sec; sfx("tick"); } // 最後 10 秒滴答
+  }
+  function runClock(){
+    Q.runStart = Date.now();
+    clearInterval(qTick);
+    qTick = setInterval(function(){
+      if (!inRound()) { clearInterval(qTick); return; }
+      if (timeLeft() <= 0) { timeUp(); return; }
+      drawClock();
+    }, 250);
+    drawClock();
+  }
+  function pauseClock(){
+    if (Q && Q.runStart) { Q.remain = Math.max(0, Q.remain - (Date.now() - Q.runStart)); Q.runStart = 0; }
+    clearInterval(qTick); qTick = null;
+    if (Q && Q.st) drawClock();
+  }
+  function stopClock(){ clearInterval(qTick); qTick = null; $("qTimer").hidden = true; $("qTimer").classList.remove("low"); BGM.fast = false; }
+  function timeUp(){
+    pauseClock();
+    Q.remain = 0; Q.timeUp = true;
+    while (Q.results.length < Q.list.length) Q.results.push(false); // 沒答到的算錯
+    toast("時間到！");
+    sfx("timeUp");
+    showResult(true);
+  }
+
+  function curQ(){ return Q.s.questions[Q.list[Q.i]]; }
+  function drawDots(){
+    $("dots").innerHTML = Q.list.map(function(_, k){
+      var c = k < Q.results.length ? (Q.results[k] ? "ok" : "no") : (k === Q.i ? "now" : "");
+      return '<span class="dot ' + c + '"></span>';
+    }).join("");
+  }
+  function showQuestion(){
+    var q = curQ();
+    Q.picked = false;
+    drawDots();
+    $("quizBody").innerHTML =
+      '<p style="margin:0 0 4px;color:var(--ink-soft);font-size:14px">第 ' + (Q.i + 1) + ' 題 / 共 ' + Q.list.length + ' 題</p>' +
+      '<p class="q-text">' + esc(q.q) + '</p>' +
+      q.options.map(function(o, k){ return '<button class="opt" data-opt="' + k + '">' + esc(o) + '</button>'; }).join("") +
+      '<div class="feedback" id="fb"></div>' +
+      '<button class="primary" id="nextBtn" hidden>' + (Q.i + 1 < Q.list.length ? "下一題" : "看結果") + '</button>';
+    $("quiz").scrollTop = 0;
+    runClock();
+  }
+  $("quizBody").addEventListener("click", function(e){
+    if (!Q) return;
+    var stg = e.target.closest("[data-stage]");
+    if (stg && !Q.st) { startStage(Q.s, +stg.getAttribute("data-stage")); return; }
+    var o = e.target.closest("[data-opt]");
+    if (o && inRound() && !Q.picked) {
+      Q.picked = true;
+      pauseClock();
+      var q = curQ(), pick = +o.getAttribute("data-opt"), ok = pick === q.answer;
+      var opts = $("quizBody").querySelectorAll(".opt");
+      opts.forEach(function(b, k){ b.disabled = true; if (k === q.answer) b.classList.add("right"); });
+      if (!ok) o.classList.add("wrong");
+      sfx(ok ? "correct" : "wrong");
+      Q.results.push(ok);
+      var fb = $("fb");
+      var qKey = Q.s.id + ":" + Q.list[Q.i];
+      if (ok) {
+        var first = !S.day.answered[qKey];
+        S.day.answered[qKey] = true;
+        fb.className = "feedback show ok";
+        fb.innerHTML = "<b>答對了！</b><p>" + (first ? "+" + CFG.xpPerCorrect + " XP" : "這題今天已經拿過經驗值，明天再來挑戰。") + "</p>";
+        if (first) addXp(CFG.xpPerCorrect, o); else save();
+      } else {
+        fb.className = "feedback show no";
+        fb.innerHTML = "<b>差一點！正確答案是「" + esc(q.options[q.answer]) + "」</b><p>💡 " + esc(q.hint || "") + "</p>";
+      }
+      drawDots();
+      $("nextBtn").hidden = false;
+      $("nextBtn").focus({preventScroll:true});
+      return;
+    }
+    var id = e.target.id;
+    if (id === "nextBtn" && inRound()) {
+      if (Q.i + 1 < Q.list.length) { Q.i++; showQuestion(); }
+      else showResult();
+      return;
+    }
+    if (id === "againBtn") { startStage(Q.s, Q.st.lv); return; }
+    if (id === "nextStageBtn") { startStage(Q.s, Q.st.lv + 1); return; }
+    if (id === "stagesBtn") { showStages(Q.s); return; }
+    if (id === "backBtn") { closeQuiz(); }
+  });
+
+  function showResult(quietStart){
+    pauseClock();
+    stopClock();
+    Q.finished = true;
+    bgmSync();
+    var s = Q.s, st = Q.st;
+    var right = Q.results.filter(Boolean).length, total = Q.list.length;
+    var sec = Math.round((st.seconds * 1000 - Q.remain) / 1000);
+    var passed = right >= st.pass;
+    // 今天的成績（每關記最好的一次）
+    if (!todayQuiz(s)) S.day.quiz[s.id] = {};
+    if (better(right, sec, S.day.quiz[s.id][st.lv])) S.day.quiz[s.id][st.lv] = { right: right, total: total, sec: sec };
+    // 歷史最佳紀錄
+    var pb = bestOf(s, st.lv), newRec = !!pb && better(right, sec, pb);
+    if (!pb || newRec) { S.best[s.id] = S.best[s.id] || {}; S.best[s.id][st.lv] = { right: right, total: total, sec: sec }; }
+    // 過關 → 打開下一關
+    var next = stageOf(s, st.lv + 1), opened = false;
+    if (passed && next && unlocked(s) < next.lv) { S.unlock[s.id] = next.lv; opened = true; }
+    save();
+    drawDots();
+    // 有對應這一科的闖關任務 → 自動打勾加分
+    var doneTask = null;
+    CFG.tasks.forEach(function(t){
+      if (quizList(t).indexOf(s.id) > -1 && !S.day.tasks[t.id]) { S.day.tasks[t.id] = true; doneTask = t; addXp(t.xp); }
+    });
+    if (doneTask) toast("任務完成「" + doneTask.label + "」+" + doneTask.xp + " XP");
+
+    var jingle = passed ? (opened ? "unlock" : "clear") : "fail";
+    if (quietStart) setTimeout(function(){ sfx(jingle); }, 700); else sfx(jingle); // 時間到的音效先響完
+    var badge;
+    if (passed && opened) badge = '<div class="result-badge ok">🎉 過關！第 ' + next.lv + ' 關打開了</div>';
+    else if (passed && next) badge = '<div class="result-badge ok">🎉 過關！可以挑戰第 ' + next.lv + ' 關</div>';
+    else if (passed) badge = '<div class="result-badge ok">🏅 最難的挑戰關也過了，你是真正的高手！</div>';
+    else badge = '<div class="result-badge no">再答對 ' + (st.pass - right) + ' 題就過關，看完提示再試一次！</div>';
+    var main = (passed && next)
+      ? '<button class="primary" id="nextStageBtn">挑戰第 ' + next.lv + ' 關 ▶</button>'
+      : '<button class="primary" id="againBtn">再挑戰一次</button>';
+    $("quizBody").innerHTML =
+      '<div class="result-big">' + right + ' / ' + total + '</div>' +
+      '<div class="result-sub">' + (Q.timeUp ? "⏰ 時間到！" : "用時 " + fmt(sec)) + (newRec ? "・🏆 新紀錄！" : "") + '</div>' +
+      badge +
+      '<div class="stack">' + main +
+      '<div class="row"><button class="secondary" id="stagesBtn">選關卡</button><button class="secondary" id="backBtn">回首頁</button></div></div>';
+    $("quiz").scrollTop = 0;
+  }
+
+  // ---------- 升級與提示 ----------
+  function showLevelUp(lv){
+    $("luTitle").textContent = "升到 Lv." + lv + "！";
+    $("luSub").textContent = "新稱號：" + titleOf(lv);
+    $("levelup").classList.add("show");
+    setTimeout(function(){ sfx("levelUp"); }, 250);
+    $("luOk").focus({preventScroll:true});
+  }
+  $("luOk").addEventListener("click", function(){ $("levelup").classList.remove("show"); });
+  var toastTimer;
+  function toast(msg){
+    var t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2000);
+  }
+  function floatXp(el, n){
+    var r = el.getBoundingClientRect(), f = document.createElement("span");
+    f.className = "float-xp"; f.textContent = "+" + n + " XP";
+    f.style.left = Math.min(r.left + r.width/2 - 24, window.innerWidth - 80) + "px";
+    f.style.top = (r.top - 4) + "px";
+    document.body.appendChild(f);
+    setTimeout(function(){ f.remove(); }, 950);
+  }
+
+  // ---------- 改名字 ----------
+  $("editName").addEventListener("click", function(){
+    var n = window.prompt("你的名字或暱稱是？", S.name);
+    if (n === null) return;
+    n = n.trim().slice(0, 12);
+    if (n) { S.name = n; save(); render(); }
+  });
+
+  // ---------- 傳給爸爸 ----------
+  function buildReport(){
+    var lines = [];
+    var d = new Date();
+    lines.push("📘 " + S.name + " 的學習回報（" + (d.getMonth()+1) + "/" + d.getDate() + "）");
+    lines.push("等級 Lv." + levelOf(S.xp) + "｜" + titleOf(levelOf(S.xp)));
+    lines.push("今天得到 " + S.day.xp + " XP，總共 " + S.xp + " XP，連續 " + S.streak + " 天");
+    lines.push("");
+    lines.push("✅ 今日任務");
+    CFG.tasks.forEach(function(t){ lines.push((S.day.tasks[t.id] ? "☑ " : "☐ ") + t.label); });
+    if (RW) {
+      var rr = rewardState();
+      lines.push("");
+      lines.push("🎁 今日獎勵（" + RW.label + "）：" + (rr.timerDone ? "已領取，時間用完了" : rr.timerEnd ? "已領取，計時中" : rr.redeemed ? "已領取，還沒開始用" : "還沒領"));
+    }
+    lines.push("");
+    lines.push("🎯 闖關成績");
+    var any = false;
+    CFG.subjects.forEach(function(s){
+      var d = todayQuiz(s); if (!d) return;
+      Object.keys(d).sort().forEach(function(k){
+        var r = d[k], st = stageOf(s, +k); any = true;
+        lines.push(s.name + " 第 " + k + " 關：" + r.right + "/" + r.total + " 題答對，用時 " + fmt(r.sec) + (st && r.right >= st.pass ? " ✅過關" : ""));
+      });
+    });
+    if (!any) lines.push("今天還沒闖關");
+    lines.push("🗺️ 目前開到：" + CFG.subjects.map(function(s){ return s.name + "第 " + Math.min(unlocked(s), stagesOf(s).length) + " 關"; }).join("、"));
+    return lines.join("\n");
+  }
+  $("makeReport").addEventListener("click", function(){
+    $("reportText").value = buildReport();
+    $("reportArea").hidden = false;
+    $("shareBtn").hidden = !navigator.share;
+  });
+  $("copyBtn").addEventListener("click", function(){
+    var text = $("reportText").value;
+    function fallback(){
+      var ta = $("reportText"); ta.removeAttribute("readonly"); ta.select();
+      var ok = false; try { ok = document.execCommand("copy"); } catch(e){}
+      ta.setAttribute("readonly", ""); window.getSelection().removeAllRanges();
+      toast(ok ? "複製好了，去 Line 貼上吧！" : "請長按文字框，選「全選」再「複製」");
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function(){ toast("複製好了，去 Line 貼上吧！"); }, fallback);
+    } else fallback();
+  });
+  $("shareBtn").addEventListener("click", function(){
+    navigator.share({ text: $("reportText").value }).catch(function(){});
+  });
+
+  // ---------- 深淺色 ----------
+  function applyTheme(){
+    if (S.theme) document.documentElement.setAttribute("data-theme", S.theme);
+    else document.documentElement.removeAttribute("data-theme");
+  }
+  $("themeBtn").addEventListener("click", function(){
+    var dark = S.theme ? S.theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    S.theme = dark ? "light" : "dark"; save(); applyTheme();
+    toast(dark ? "切換成淺色" : "切換成深色");
+  });
+
+  // ---------- 清除 ----------
+  $("resetBtn").addEventListener("click", function(){
+    if (!window.confirm("確定要清除全部進度嗎？等級和經驗值會回到 0。")) return;
+    try { localStorage.removeItem(KEY); } catch(e){}
+    S = { name: CFG.defaultName, xp: 0, streak: 0, lastActive: "", theme: S.theme, music: S.music, sfx: S.sfx, unlock: {}, best: {}, day: { date: today(), tasks: {}, xp: 0, answered: {}, quiz: {} } };
+    save(); render(); toast("已經重新開始");
+  });
+
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape") {
+      if ($("ceremony").classList.contains("show")) endCeremony();
+      else if ($("levelup").classList.contains("show")) $("levelup").classList.remove("show");
+      else if (Q) closeQuiz();
+    }
+  });
+
+  applyTheme();
+  render();
+  drawSoundBtns();
+})();
+</script>
+</body>
+</html>
