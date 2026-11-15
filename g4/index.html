@@ -826,18 +826,18 @@ button{font:inherit;color:inherit;cursor:pointer}
   }
   function seq(ac, t, freqs, gap, dur, type, vol){ freqs.forEach(function(f, i){ tone(ac, f, t + i * gap, dur, type, vol); }); }
   var SFX = {
-    tap:     function(ac, t){ tone(ac, 1200, t, 0.04, "square", 0.035); },
-    correct: function(ac, t){ tone(ac, 1046.5, t, 0.1, "square", 0.08); tone(ac, 1568, t + 0.09, 0.22, "square", 0.08); },
-    wrong:   function(ac, t){ tone(ac, 247, t, 0.14, "sawtooth", 0.06); tone(ac, 185, t + 0.14, 0.3, "sawtooth", 0.06); },
-    coin:    function(ac, t){ tone(ac, 988, t, 0.08, "square", 0.07); tone(ac, 1319, t + 0.08, 0.3, "square", 0.07); },
+    tap:     function(ac, t){ tone(ac, 900, t, 0.05, "sine", 0.05); },
+    correct: function(ac, t){ tone(ac, 1046.5, t, 0.1, "triangle", 0.08); tone(ac, 1568, t + 0.09, 0.22, "triangle", 0.08); },
+    wrong:   function(ac, t){ tone(ac, 247, t, 0.14, "triangle", 0.06); tone(ac, 185, t + 0.14, 0.3, "triangle", 0.06); },
+    coin:    function(ac, t){ tone(ac, 988, t, 0.08, "triangle", 0.07); tone(ac, 1319, t + 0.08, 0.3, "triangle", 0.07); },
     locked:  function(ac, t){ tone(ac, 140, t, 0.18, "triangle", 0.2); tone(ac, 120, t + 0.12, 0.2, "triangle", 0.18); },
-    start:   function(ac, t){ seq(ac, t, [659, 784, 1047], 0.08, 0.12, "square", 0.07); },
-    tick:    function(ac, t){ tone(ac, 1500, t, 0.03, "sine", 0.12); },
-    timeUp:  function(ac, t){ seq(ac, t, [523, 392, 262], 0.18, 0.2, "square", 0.08); },
-    clear:   function(ac, t){ seq(ac, t, [523, 659, 784, 1047], 0.1, 0.15, "square", 0.07); [523, 659, 784, 1047].forEach(function(f){ tone(ac, f, t + 0.45, 0.7, "triangle", 0.07); }); },
+    start:   function(ac, t){ seq(ac, t, [659, 784, 1047], 0.08, 0.12, "triangle", 0.07); },
+    tick:    function(ac, t){ tone(ac, 1100, t, 0.04, "sine", 0.07); },
+    timeUp:  function(ac, t){ seq(ac, t, [523, 392, 262], 0.18, 0.2, "triangle", 0.08); },
+    clear:   function(ac, t){ seq(ac, t, [523, 659, 784, 1047], 0.1, 0.15, "triangle", 0.07); [523, 659, 784, 1047].forEach(function(f){ tone(ac, f, t + 0.45, 0.7, "triangle", 0.07); }); },
     unlock:  function(ac, t){ SFX.clear(ac, t); seq(ac, t + 0.9, [1319, 1568, 2093, 2637, 3136], 0.06, 0.15, "sine", 0.05); },
     fail:    function(ac, t){ seq(ac, t, [392, 349, 330, 294], 0.16, 0.2, "triangle", 0.12); },
-    levelUp: function(ac, t){ seq(ac, t, [392, 523, 659, 784], 0.09, 0.12, "square", 0.07); tone(ac, 1047, t + 0.38, 0.6, "square", 0.07); tone(ac, 523, t + 0.38, 0.6, "triangle", 0.1); }
+    levelUp: function(ac, t){ seq(ac, t, [392, 523, 659, 784], 0.09, 0.12, "triangle", 0.07); tone(ac, 1047, t + 0.38, 0.6, "triangle", 0.07); tone(ac, 523, t + 0.38, 0.6, "triangle", 0.1); }
   };
   function sfx(name){
     if (!S.sfx || !soundReady || !SFX[name]) return;
@@ -849,10 +849,10 @@ button{font:inherit;color:inherit;cursor:pointer}
   function midi(m){ return 440 * Math.pow(2, (m - 69) / 12); }
   var C = [60, 64, 67], G = [55, 59, 62], Am = [57, 60, 64], F = [53, 57, 60], Em = [52, 55, 59];
   var SONGS = {
-    home: { bpm: 108, chords: [C, G, Am, F, C, Em, F, G],
-            pats: [[0, 1, 2, 1, 3, 2, 1, 2], [2, -1, 1, 0, 1, -1, 2, -1]] },
-    quiz: { bpm: 132, chords: [Am, F, C, G],
-            pats: [[0, 2, 1, 2, 3, 2, 1, 2], [3, 2, 1, 2, 0, -1, 0, -1]] }
+    home: { bpm: 92, chords: [C, G, Am, F, C, Em, F, G],
+            pats: [[0, -1, 1, -1, 2, -1, 1, -1], [3, -1, 2, -1, 1, -1, -1, -1]] },
+    quiz: { bpm: 112, chords: [Am, F, C, G],
+            pats: [[0, -1, 2, -1, 1, -1, 2, -1], [3, -1, 2, -1, 0, -1, -1, -1]] }
   };
   var BGM = { song: null, step: 0, next: 0, timer: null, gain: null, fast: false };
   function bgmWant(){
@@ -873,14 +873,15 @@ button{font:inherit;color:inherit;cursor:pointer}
   }
   function bgmTick(){
     var ac = AC, song = SONGS[BGM.song]; if (!ac || !song || !BGM.gain) return;
-    var step = 60 / (song.bpm * (BGM.fast ? 1.3 : 1)) / 2; // 八分音符
+    var step = 60 / (song.bpm * (BGM.fast ? 1.15 : 1)) / 2; // 八分音符
     if (BGM.next < ac.currentTime) BGM.next = ac.currentTime + 0.05; // 卡頓後不要一次補一堆音
     while (BGM.next < ac.currentTime + 0.25) {
       var bar = Math.floor(BGM.step / 8) % song.chords.length, pos = BGM.step % 8;
       var ch = song.chords[bar], p = song.pats[bar % song.pats.length][pos];
       var tones = [ch[0] + 12, ch[1] + 12, ch[2] + 12, ch[0] + 24];
-      if (p >= 0) tone(ac, midi(tones[p]), BGM.next, step * 0.85, "square", 0.025, BGM.gain);
-      if (pos % 4 === 0) tone(ac, midi(ch[0] - 12), BGM.next, step * 3.5, "triangle", 0.09, BGM.gain);
+      // 柔和的音色（像音樂盒），音量壓低，當背景不搶戲
+      if (p >= 0) tone(ac, midi(tones[p]), BGM.next, step * 1.8, "sine", 0.035, BGM.gain);
+      if (pos === 0) tone(ac, midi(ch[0] - 12), BGM.next, step * 7, "sine", 0.04, BGM.gain);
       BGM.next += step; BGM.step++;
     }
   }
